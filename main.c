@@ -3,7 +3,14 @@
 
 typedef struct {
   // Variables
-  double kwh;
+  double kwhPerSecond;
+  double kwhPerClick;
+
+  // Generator Variables
+  int activeGenerator;
+
+  // Battery Variables
+  int activeBattery;
 } GameData;
 
 void saveGame(GameData *data);
@@ -28,8 +35,8 @@ int main(void) {
 
   // Functional Variables
   static float dayTimer = 0.0f;
-  const double dayMinute = 10;  // 15 minut den = 900sec
-  const double nightMinute = 5; // 9 minut noc = 540sec
+  const double dayMinute = 900;   // 15 minut den = 900sec
+  const double nightMinute = 540; // 9 minut noc = 540sec
   float dayPercentage = 0.0f;
   bool isSunlight = true;
 
@@ -45,25 +52,50 @@ int main(void) {
 
     BeginDrawing();
 
+    Vector2 mousePoint = GetMousePosition();
+    bool isHovering = false;
+    bool isClicked = false;
+
     if (currentScreen == SCREEN_MAIN) {
       ClearBackground(bgColor);
+
+      // MAIN Variables
+      const int blockHeight = 75;
+      Rectangle crankButton = {12, 12 + blockHeight, (screenWidth / 3 - 24),
+                               blockHeight};
+
+      // Draw Basic Outlines
       DrawRectangleLines(6, 6, screenWidth - 12, screenHeight - 12, neonGreen);
+      DrawRectangleLines(6, 6, screenWidth / 3 - 12, screenHeight - 12,
+                         neonGreen);
+      DrawRectangleLines(6, 6, (screenWidth / 3) * 2 - 12, screenHeight - 12,
+                         neonGreen);
+      DrawRectangleLines(6, 6, screenWidth / 3 - 12, blockHeight + 3,
+                         neonGreen);
+
+      isHovering = CheckCollisionPointRec(mousePoint, crankButton);
+      isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+      DrawRectangleRec(crankButton, isHovering ? GRAY : BLACK);
+      DrawText("Click to rotate the crank.",
+               (screenWidth / 6) -
+                   MeasureText("Click to rotate the crank.", 20) / 2,
+               (12 + blockHeight) + (blockHeight / 2) - 10, 20, neonGreen);
 
 #pragma region Sunlight function
       char dayTimerText[30];
       snprintf(dayTimerText, sizeof(dayTimerText), "Sunlight %: %0.1f",
                dayPercentage);
       DrawText(dayTimerText,
-               (screenWidth / 6) - (MeasureText(dayTimerText, 20) / 2), 12, 20,
-               neonGreen);
+               (screenWidth / 6) - (MeasureText(dayTimerText, 20) / 2),
+               blockHeight / 2 - 10, 20, neonGreen);
 
       // Draw If Its Day or Night
       if (isSunlight) {
-        DrawText("DAY", (screenWidth / 6) - MeasureText("DAY", 20) / 2, 32, 20,
-                 neonGreen);
+        DrawText("DAY", (screenWidth / 6) - MeasureText("DAY", 20) / 2,
+                 blockHeight / 2 + 24, 20, neonGreen);
       } else {
-        DrawText("NIGHT", (screenWidth / 6) - MeasureText("NIGHT", 20) / 2, 32,
-                 20, neonGreen);
+        DrawText("NIGHT", (screenWidth / 6) - MeasureText("NIGHT", 20) / 2,
+                 blockHeight / 2 + 24, 20, neonGreen);
       }
 
       // SunLight Calculation
@@ -88,8 +120,8 @@ int main(void) {
           dayTimer = 0.0f;
         }
       }
-    }
 #pragma endregion
+    }
 
     EndDrawing();
   }
