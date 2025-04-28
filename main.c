@@ -30,6 +30,8 @@ typedef struct {
 typedef struct {
   char name[30];
   double generatesPerSecond;
+  double damage;
+  double efficiency;
 } Generator;
 
 void setBattery(Battery *battery, int selected);
@@ -70,6 +72,7 @@ int main(void) {
   Generator generator = {0};
   data.activeGenerator = 1;
   setGenerator(&generator, data.activeGenerator);
+  generator.efficiency = 1.0;
 
   // Color Pallete
   Color bgColor = BLACK;
@@ -320,6 +323,22 @@ void setGenerator(Generator *generator, int selected) {
   case 1:
     strcpy(generator->name, "Hand Crank");
     generator->generatesPerSecond = 0.5; // Wh
+    generator->efficiency = 1.0;
     break;
+  // Basic Energy Generation
+  case 2:
+    strcpy(generator->name, "Solar Cells");
+    generator->generatesPerSecond = 50.0 / 60 / 60; // In hours
+    generator->damage = 5.0 / 60 / 60;
+    break;
+    strcpy(generator->name, "Small Wind Turbine");
+    generator->generatesPerSecond = 1.0 * 60;
+    generator->efficiency = 1.0;
+    break;
+  // Mid-Tier Energy Generation
+  case 3:
+    strcpy(generator->name, "Gasoline Generator");
+    generator->generatesPerSecond = 5.0;
+    generator->efficiency = 1.0;
   }
 }
