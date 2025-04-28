@@ -1,20 +1,31 @@
 #include "raylib.h"
 #include <stdio.h>
+#include <string.h>
 
 typedef struct {
   // Variables
-  double kwhPerSecond;
-  double kwhPerClick;
+  double whPerSecond;
+  double whPerClick;
 
   // Generator Variables
   int activeGenerator;
 
   // Battery Variables
   int activeBattery;
+  double batteryCharge;
 } GameData;
 
-void saveGame(GameData *data);
-void loadGame(GameData *data);
+// Battery Variables
+typedef struct {
+  char name[30];
+  double capacity;
+  double maxChargeRate;
+  double defectRate;
+
+  double chargeInPercent;
+} Battery;
+
+void setBatteryVariables(Battery *battery, int selected);
 
 int main(void) {
   // Const Variables
@@ -42,10 +53,15 @@ int main(void) {
 
   // Default Variables
   GameData data = {0};
+  data.whPerClick = 0.5;
+
+  Battery battery = {0};
+  setBatteryVariables(&battery, 1);
 
   // Color Pallete
   Color bgColor = BLACK;
   Color neonGreen = {57, 255, 20, 255};
+  Color warning = {255, 10, 10, 255};
 
   // Application Run
   while (!WindowShouldClose()) {
@@ -61,8 +77,8 @@ int main(void) {
 
       // MAIN Variables
       const int blockHeight = 75;
-      Rectangle crankButton = {12, 12 + blockHeight, (screenWidth / 3 - 24),
-                               blockHeight};
+      Rectangle crankButton = {12, blockHeight + 16, (screenWidth / 3 - 24),
+                               blockHeight * 2};
 
       // Draw Basic Outlines
       DrawRectangleLines(6, 6, screenWidth - 12, screenHeight - 12, neonGreen);
@@ -72,6 +88,10 @@ int main(void) {
                          neonGreen);
       DrawRectangleLines(6, 6, screenWidth / 3 - 12, blockHeight + 3,
                          neonGreen);
+      DrawRectangleLines(6, 6, screenWidth / 3 - 12, screenHeight / 3,
+                         neonGreen);
+      DrawRectangleLines(6, 6, screenWidth / 3 - 12, (screenHeight / 3) * 2,
+                         neonGreen);
 
       isHovering = CheckCollisionPointRec(mousePoint, crankButton);
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
@@ -79,7 +99,20 @@ int main(void) {
       DrawText("Click to rotate the crank.",
                (screenWidth / 6) -
                    MeasureText("Click to rotate the crank.", 20) / 2,
-               (12 + blockHeight) + (blockHeight / 2) - 10, 20, neonGreen);
+               (12 + blockHeight) + blockHeight - 10, 20, neonGreen);
+
+      if (isClicked || IsKeyDown(KEY_C)) {
+        if (battery.capacity > data.batteryCharge) {
+          data.batteryCharge += data.whPerClick;
+        }
+      }
+
+      char whPerClickText[30];
+      snprintf(whPerClickText, sizeof(whPerClickText), "%0.2f Wh per click",
+               data.whPerClick);
+      DrawText(whPerClickText,
+               screenWidth / 6 - MeasureText(whPerClickText, 20) / 2,
+               (12 + blockHeight) + blockHeight + 10, 20, neonGreen);
 
 #pragma region Sunlight function
       char dayTimerText[30];
@@ -121,6 +154,47 @@ int main(void) {
         }
       }
 #pragma endregion
+#pragma region Battery
+      setBatteryVariables(&battery, 1);
+
+      // Formatting variables for text output.
+      char batCapacityText[30];
+      char batMaxChargeText[30];
+      char batChargeText[30];
+      char batChargePercentText[30];
+
+      snprintf(batCapacityText, sizeof(batCapacityText),
+               "Max. Capacity: %0.0f Wh", battery.capacity);
+      snprintf(batMaxChargeText, sizeof(batMaxChargeText),
+               "Max. Charge Rate: %0.2f Wh/s", battery.maxChargeRate);
+      snprintf(batChargeText, sizeof(batChargeText), "Current Charge: %0.2f Wh",
+               data.batteryCharge);
+      snprintf(batChargePercentText, sizeof(batChargePercentText),
+               "Current Charge in %: %0.2f", battery.chargeInPercent);
+
+      // Draw Battery Info
+      DrawText("Battery: ", 10, screenHeight / 3 + 10, 20, neonGreen);
+      DrawText(battery.name, 10 + MeasureText("Battery: ", 20),
+               screenHeight / 3 + 10, 20, neonGreen);
+      DrawText(batCapacityText, 10, screenHeight / 3 + 50, 20, neonGreen);
+      DrawText(batMaxChargeText, 10, screenHeight / 3 + 70, 20, neonGreen);
+      DrawText(batChargeText, 10, screenHeight / 3 + 110, 20, neonGreen);
+      if (battery.chargeInPercent > 75.0) {
+        DrawText(batChargePercentText, 10, screenHeight / 3 + 130, 20, warning);
+      } else {
+        DrawText(batChargePercentText, 10, screenHeight / 3 + 130, 20,
+                 neonGreen);
+      }
+
+      // Calculations ============================
+      // Percentage
+      battery.chargeInPercent = 100.0 * (data.batteryCharge / battery.capacity);
+
+#pragma endregion
+#pragma region Upgrades
+      // Battery Upgrade
+
+#pragma endregion
     }
 
     EndDrawing();
@@ -129,18 +203,15 @@ int main(void) {
 
   return 0;
 }
-void saveGame(GameData *data) {
-  FILE *file = fopen("savedata.txt", "wb");
-  if (file != NULL) {
-    fwrite(data, sizeof(GameData), 1, file);
-    fclose(file);
-  }
-}
 
-void loadGame(GameData *data) {
-  FILE *file = fopen("savedata.txt", "rb");
-  if (file != NULL) {
-    fread(data, sizeof(GameData), 1, file);
-    fclose(file);
+void setBatteryVariables(Battery *battery, int selected) {
+  switch (selected) {
+  case 1:
+    // Basic Battery (on start)
+    strcpy(battery->name, "Lithium-Ion Battery");
+    battery->capacity = 1000.0;
+    battery->maxChargeRate = 1.0;
+    battery->defectRate = 5.0; // per 1Wh
+    break;
   }
 }
