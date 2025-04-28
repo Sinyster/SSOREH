@@ -19,13 +19,21 @@ typedef struct {
 typedef struct {
   char name[30];
   double capacity;
+  double currentCapacity;
   double maxChargeRate;
   double defectRate;
+  double life;
 
   double chargeInPercent;
 } Battery;
 
-void setBatteryVariables(Battery *battery, int selected);
+typedef struct {
+  char name[30];
+  double generatesPerSecond;
+} Generator;
+
+void setBattery(Battery *battery, int selected);
+void setGenerator(Generator *generator, int selected);
 
 int main(void) {
   // Const Variables
@@ -56,7 +64,12 @@ int main(void) {
   data.whPerClick = 0.5;
 
   Battery battery = {0};
-  setBatteryVariables(&battery, 1);
+  data.activeBattery = 1;
+  setBattery(&battery, 1);
+
+  Generator generator = {0};
+  data.activeGenerator = 1;
+  setGenerator(&generator, data.activeGenerator);
 
   // Color Pallete
   Color bgColor = BLACK;
@@ -72,13 +85,14 @@ int main(void) {
     bool isHovering = false;
     bool isClicked = false;
 
+    bool generating = false;
+
     if (currentScreen == SCREEN_MAIN) {
+
       ClearBackground(bgColor);
 
       // MAIN Variables
       const int blockHeight = 75;
-      Rectangle crankButton = {12, blockHeight + 16, (screenWidth / 3 - 24),
-                               blockHeight * 2};
 
       // Draw Basic Outlines
       DrawRectangleLines(6, 6, screenWidth - 12, screenHeight - 12, neonGreen);
@@ -92,27 +106,31 @@ int main(void) {
                          neonGreen);
       DrawRectangleLines(6, 6, screenWidth / 3 - 12, (screenHeight / 3) * 2,
                          neonGreen);
+      Rectangle onOffButton = {12, blockHeight + 16, (screenWidth / 3 - 24),
+                               blockHeight * 2};
 
-      isHovering = CheckCollisionPointRec(mousePoint, crankButton);
+#pragma region Turn On/Off
+      isHovering = CheckCollisionPointRec(mousePoint, onOffButton);
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-      DrawRectangleRec(crankButton, isHovering ? GRAY : BLACK);
-      DrawText("Click to rotate the crank.",
-               (screenWidth / 6) -
-                   MeasureText("Click to rotate the crank.", 20) / 2,
-               (12 + blockHeight) + blockHeight - 10, 20, neonGreen);
+      DrawRectangleRec(onOffButton, isHovering ? GRAY : BLACK);
 
-      if (isClicked || IsKeyDown(KEY_C)) {
-        if (battery.capacity > data.batteryCharge) {
-          data.batteryCharge += data.whPerClick;
-        }
+      if (data.batteryCharge > battery.capacity) {
+        data.batteryCharge = battery.capacity;
       }
 
-      char whPerClickText[30];
-      snprintf(whPerClickText, sizeof(whPerClickText), "%0.2f Wh per click",
-               data.whPerClick);
-      DrawText(whPerClickText,
-               screenWidth / 6 - MeasureText(whPerClickText, 20) / 2,
-               (12 + blockHeight) + blockHeight + 10, 20, neonGreen);
+      if (data.activeGenerator == 1) {
+        DrawText("Rotate the Crank",
+                 screenWidth / 6 - MeasureText("Rotate the Crank", 20) / 2,
+                 blockHeight * 2, 20, neonGreen);
+      }
+
+      if (data.activeGenerator == 1 && isClicked) {
+        data.batteryCharge += generator.generatesPerSecond;
+      }
+
+      if (isClicked && data.activeBattery != 1) {
+      }
+#pragma endregion
 
 #pragma region Sunlight function
       char dayTimerText[30];
@@ -155,22 +173,24 @@ int main(void) {
       }
 #pragma endregion
 #pragma region Battery
-      setBatteryVariables(&battery, 1);
 
       // Formatting variables for text output.
       char batCapacityText[30];
       char batMaxChargeText[30];
       char batChargeText[30];
       char batChargePercentText[30];
+      char batLifeText[30];
 
       snprintf(batCapacityText, sizeof(batCapacityText),
-               "Max. Capacity: %0.0f Wh", battery.capacity);
+               "Max. Capacity: %0.0f Wh", battery.currentCapacity);
       snprintf(batMaxChargeText, sizeof(batMaxChargeText),
                "Max. Charge Rate: %0.2f Wh/s", battery.maxChargeRate);
       snprintf(batChargeText, sizeof(batChargeText), "Current Charge: %0.2f Wh",
                data.batteryCharge);
       snprintf(batChargePercentText, sizeof(batChargePercentText),
                "Current Charge in %: %0.2f", battery.chargeInPercent);
+      snprintf(batLifeText, sizeof(batLifeText), "Battery Life in %: %0.1f",
+               battery.life);
 
       // Draw Battery Info
       DrawText("Battery: ", 10, screenHeight / 3 + 10, 20, neonGreen);
@@ -185,11 +205,40 @@ int main(void) {
         DrawText(batChargePercentText, 10, screenHeight / 3 + 130, 20,
                  neonGreen);
       }
+      if (battery.life < 25.0) {
+        DrawText(batLifeText, 10, screenHeight / 3 + 170, 20, warning);
+      } else {
+        DrawText(batLifeText, 10, screenHeight / 3 + 170, 20, neonGreen);
+      }
 
       // Calculations ============================
       // Percentage
       battery.chargeInPercent = 100.0 * (data.batteryCharge / battery.capacity);
 
+      // Damaging the Battery
+      if (data.activeGenerator == 1) {
+        if (data.batteryCharge > battery.currentCapacity) {
+          battery.currentCapacity -= data.whPerClick * battery.defectRate;
+          data.batteryCharge = battery.currentCapacity;
+        }
+      }
+      if (generating && data.batteryCharge >= battery.currentCapacity) {
+        battery.life -= (data.whPerSecond * battery.defectRate);
+      }
+
+#pragma endregion
+#pragma region Generator
+      DrawText("Generator: ", 10, (screenHeight / 3) * 2 + 10, 20, neonGreen);
+      DrawText(generator.name, 10 + MeasureText("Generator: ", 20),
+               (screenHeight / 3) * 2 + 10, 20, neonGreen);
+      if (data.activeGenerator == 1) {
+        char whPerClickText[30];
+        snprintf(whPerClickText, sizeof(whPerClickText),
+                 "Generates per click: %0.2f Wh", data.whPerClick);
+        DrawText(whPerClickText, 10, screenHeight / 3 * 2 + 50, 20, neonGreen);
+      } else {
+        // Other Generators
+      }
 #pragma endregion
 #pragma region Upgrades
       // Battery Upgrade
@@ -204,14 +253,73 @@ int main(void) {
   return 0;
 }
 
-void setBatteryVariables(Battery *battery, int selected) {
+void setBattery(Battery *battery, int selected) {
   switch (selected) {
   case 1:
     // Basic Battery (on start)
     strcpy(battery->name, "Lithium-Ion Battery");
     battery->capacity = 1000.0;
+    battery->currentCapacity = battery->capacity;
     battery->maxChargeRate = 1.0;
     battery->defectRate = 5.0; // per 1Wh
+    battery->life = 100.0;     // %
+    break;
+    // Basic storage Upgrade
+  case 2:
+    strcpy(battery->name, "Lead-Acid Battery");
+    battery->capacity = 1500.0;
+    battery->currentCapacity = battery->capacity;
+    battery->maxChargeRate = 3.0;
+    battery->defectRate = 1.0;
+    battery->life = 100.0;
+    break;
+  // Mid-Tier Energy Storage
+  case 3:
+    strcpy(battery->name, "Supercharged Lithium-Ion Battery");
+    battery->capacity = 5000.0;
+    battery->currentCapacity = battery->capacity;
+    battery->maxChargeRate = 5.0;
+    break;
+  case 4:
+    strcpy(battery->name, "Flow Battery");
+    battery->capacity = 10000.0;
+    battery->currentCapacity = battery->capacity;
+    battery->maxChargeRate = 8.0;
+    break;
+  // Advanced Energy Storage
+  case 5:
+    strcpy(battery->name, "Solid-State Battery");
+    battery->capacity = 20000.0;
+    battery->currentCapacity = battery->capacity;
+    battery->maxChargeRate = 15.0;
+    break;
+  case 6:
+    strcpy(battery->name, "SUpercapacitor");
+    battery->capacity = 5000.0;
+    battery->currentCapacity = battery->capacity;
+    break;
+  // Premium Energy Storage
+  case 7:
+    strcpy(battery->name, "Fusion Power Cell");
+    battery->capacity = 100000.0;
+    battery->currentCapacity = battery->capacity;
+    battery->maxChargeRate = 50.0;
+    battery->defectRate = 30.0;
+    break;
+  case 8:
+    strcpy(battery->name, "Quantum Energy Vault");
+    battery->capacity = 999999999999999;
+    battery->currentCapacity = battery->capacity;
+    battery->maxChargeRate = 100.0;
+    break;
+  }
+}
+
+void setGenerator(Generator *generator, int selected) {
+  switch (selected) {
+  case 1:
+    strcpy(generator->name, "Hand Crank");
+    generator->generatesPerSecond = 0.5; // Wh
     break;
   }
 }
