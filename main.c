@@ -9,13 +9,6 @@ typedef struct {
 void saveGame(GameData *data);
 void loadGame(GameData *data);
 
-typedef struct {
-  int hours;
-  int minutes;
-} TimeData;
-
-void convertTime(TimeData *time);
-
 int main(void) {
   // Const Variables
   const int screenWidth = 1280;
@@ -43,10 +36,12 @@ int main(void) {
   // Default Variables
   GameData data = {0};
 
+  // Color Pallete
+  Color bgColor = BLACK;
+  Color neonGreen = {57, 255, 20, 255};
+
   // Application Run
   while (!WindowShouldClose()) {
-    Color bgColor = {66, 69, 73, 255};
-    Color neonGreen = {57, 255, 20, 255};
 
     BeginDrawing();
 
@@ -62,6 +57,16 @@ int main(void) {
                (screenWidth / 6) - (MeasureText(dayTimerText, 20) / 2), 12, 20,
                neonGreen);
 
+      // Draw If Its Day or Night
+      if (isSunlight) {
+        DrawText("DAY", (screenWidth / 6) - MeasureText("DAY", 20) / 2, 32, 20,
+                 neonGreen);
+      } else {
+        DrawText("NIGHT", (screenWidth / 6) - MeasureText("NIGHT", 20) / 2, 32,
+                 20, neonGreen);
+      }
+
+      // SunLight Calculation
       if (isSunlight) {
         dayTimer += GetFrameTime();
         if (dayTimer < dayMinute / 2) {
@@ -105,11 +110,5 @@ void loadGame(GameData *data) {
   if (file != NULL) {
     fread(data, sizeof(GameData), 1, file);
     fclose(file);
-  }
-}
-
-void convertTime(TimeData *time) {
-  while (time->minutes % 60 == 0) {
-    time->hours += 1;
   }
 }
