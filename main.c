@@ -73,6 +73,7 @@ int main(void) {
   data.activeGenerator = 1;
   setGenerator(&generator, data.activeGenerator);
   generator.efficiency = 1.0;
+  bool generating = false;
 
   // Color Pallete
   Color bgColor = BLACK;
@@ -88,8 +89,6 @@ int main(void) {
     bool isHovering = false;
     bool isClicked = false;
 
-    bool generating = false;
-
     if (currentScreen == SCREEN_MAIN) {
 
       ClearBackground(bgColor);
@@ -103,12 +102,17 @@ int main(void) {
                          neonGreen);
       DrawRectangleLines(6, 6, (screenWidth / 3) * 2 - 12, screenHeight - 12,
                          neonGreen);
-      DrawRectangleLines(6, 6, screenWidth / 3 - 12, blockHeight + 3,
-                         neonGreen);
+      DrawRectangleLines(6, 6, screenWidth - 12, blockHeight + 3, neonGreen);
       DrawRectangleLines(6, 6, screenWidth / 3 - 12, screenHeight / 3,
                          neonGreen);
-      DrawRectangleLines(6, 6, screenWidth / 3 - 12, (screenHeight / 3) * 2,
+      DrawRectangleLines(6, 6, screenWidth - 12, (screenHeight / 3) * 2,
                          neonGreen);
+      DrawRectangleLines(6, 6, screenWidth - 12, blockHeight + 6, neonGreen);
+      DrawText("Upgrades:", screenWidth / 2 - MeasureText("Upgrades:", 20) / 2,
+               blockHeight / 2, 20, neonGreen);
+      DrawText("More Control:",
+               (screenWidth / 6) * 5 - MeasureText("More Control:", 20) / 2,
+               blockHeight / 2, 20, neonGreen);
       Rectangle onOffButton = {12, blockHeight + 16, (screenWidth / 3 - 24),
                                blockHeight * 2};
 
@@ -141,7 +145,7 @@ int main(void) {
                dayPercentage);
       DrawText(dayTimerText,
                (screenWidth / 6) - (MeasureText(dayTimerText, 20) / 2),
-               blockHeight / 2 - 10, 20, neonGreen);
+               blockHeight / 2, 20, neonGreen);
 
       // Draw If Its Day or Night
       if (isSunlight) {
@@ -240,7 +244,9 @@ int main(void) {
                  "Generates per click: %0.2f Wh", data.whPerClick);
         DrawText(whPerClickText, 10, screenHeight / 3 * 2 + 50, 20, neonGreen);
       } else {
-        // Other Generators
+        DrawText("Generator: ", 10, (screenHeight / 3) * 2 + 10, 20, neonGreen);
+        DrawText(generator.name, 10 + MeasureText("Generator: ", 20),
+                 (screenHeight / 3) * 2 + 10, 20, neonGreen);
       }
 #pragma endregion
 #pragma region Upgrades
@@ -256,6 +262,7 @@ int main(void) {
   return 0;
 }
 
+#pragma region Setting Battery
 void setBattery(Battery *battery, int selected) {
   switch (selected) {
   case 1:
@@ -317,7 +324,9 @@ void setBattery(Battery *battery, int selected) {
     break;
   }
 }
+#pragma endregion
 
+#pragma region Setting Generators
 void setGenerator(Generator *generator, int selected) {
   switch (selected) {
   case 1:
@@ -342,3 +351,4 @@ void setGenerator(Generator *generator, int selected) {
     generator->efficiency = 1.0;
   }
 }
+#pragma endregion
