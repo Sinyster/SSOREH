@@ -1,1 +1,2 @@
-Background: #424549 (66,69,73)
+Background: 66, 69, 73
+Neon Green: 57, 255, 20
