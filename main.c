@@ -96,6 +96,7 @@ int main(void) {
   // Game Variables;
   bool isHovering = false;
   bool isClicked = false;
+  bool isGenerating = false;
 
   static float dayTimer = 0.0f;
   bool isDay = true;
@@ -251,6 +252,18 @@ int main(void) {
                    MeasureText("Powering: ", headerFontSize),
                PanelHeight * 2, headerFontSize, textColor);
 
+      char drainText[30];
+      snprintf(drainText, sizeof(drainText), "Drains: %0.1f Wh/s",
+               stuff.drainPerSecond);
+      DrawText(drainText, screenWidth / 3 * 2 + PanelHeight, PanelHeight * 3,
+               textFontSize, textColor);
+
+      char gensText[30];
+      snprintf(gensText, sizeof(gensText), "Gains: %0.1f $/s",
+               stuff.moneyPerSecond);
+      DrawText(gensText, screenWidth / 3 * 2 + PanelHeight,
+               PanelHeight * 3 + textFontSize, textFontSize, textColor);
+
 #pragma region Generation
       if (strcmp(gen.name, "Hand Crank") == 0) {
         Rectangle handCrank = {screenWidth / 2 - buttonWidth / 2,
@@ -268,6 +281,16 @@ int main(void) {
                  headerFontSize, headerColor);
         if (isClicked) {
           data.batteryCharge += gen.whPerClick;
+        }
+      }
+
+#pragma endregion
+
+#pragma region Selling
+      if (isGenerating) {
+        if (data.batteryCharge > 0.0) {
+          data.batteryCharge -= stuff.drainPerSecond / targetFps;
+          data.money += stuff.moneyPerSecond / targetFps;
         }
       }
 
