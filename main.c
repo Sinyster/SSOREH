@@ -1,8 +1,17 @@
 #include "raylib.h"
 #include <stdio.h>
 
+/*
+  Trying to make save files as small as possible.
+*/
+
 typedef struct {
   double money;
+
+  // Battery
+  double batteryCharge;
+
+  // Generator
 } GameData;
 typedef struct {
 } Battery;
@@ -76,10 +85,16 @@ int main(void) {
     // Fifth Part
 
 #pragma endregion
-    if (currentScene == SCENE_MAIN) {
 #pragma region Lower Panel
-      DrawRectangle(0, screenHeight - PanelHeight, screenWidth, PanelHeight,
-                    bgColor2);
+    DrawRectangle(0, screenHeight - PanelHeight, screenWidth, PanelHeight,
+                  bgColor2);
+#pragma endregion
+    if (currentScene == SCENE_MAIN) {
+      // Editing Upper Panel
+      DrawLine(3, PanelHeight * 0.9, screenWidth / 5, PanelHeight * 0.9,
+               linesColor);
+
+      // Editing Lower Panel
       // Drawing Money
       char moneyText[30];
       snprintf(moneyText, sizeof(moneyText), "$ %0.2f", data.money);
@@ -92,9 +107,9 @@ int main(void) {
                    MeasureText(moneyText, headerFontSize) / 2,
                screenHeight - PanelHeight / 2 - headerFontSize / 2,
                headerFontSize, headerColor);
-#pragma endregion
-    }
 
+      //
+    }
     EndDrawing();
   }
   CloseWindow();
