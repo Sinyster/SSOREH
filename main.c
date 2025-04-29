@@ -6,13 +6,21 @@ typedef struct {
   // Variables
   double whPerSecond;
   double whPerClick;
+  double money;
+  double moneyPerWh;
 
   // Generator Variables
   int activeGenerator;
+  int numOfPowerCells;
+  int lvlOfGenerator;
+  double paidGeneratorUpgrade;
 
   // Battery Variables
   int activeBattery;
   double batteryCharge;
+  int lvlOfBattery;
+  double paidBatteryUpgrade;
+
 } GameData;
 
 // Battery Variables
@@ -23,28 +31,33 @@ typedef struct {
   double maxChargeRate;
   double defectRate;
   double life;
+  double price;
+  double multiplier;
+
+  double lvlUpPrice;
 
   double chargeInPercent;
 } Battery;
 
+// Generator Variables
 typedef struct {
   char name[30];
   double generatesPerSecond;
   double damage;
   double efficiency;
+
+  double lvlUpPrice;
 } Generator;
 
 void setBattery(Battery *battery, int selected);
-void setGenerator(Generator *generator, int selected);
+void setGenerator(Generator *generator, GameData *data, int selected);
 
 int main(void) {
   // Const Variables
-  const int screenWidth = 1280;
-  const int screenHeight = 720;
+  const double screenWidth = 1280.0;
+  const double screenHeight = 720.0;
   const int targetFps = 60;
-  char title[] = "SSOREH";
-
-  // Color Palette
+  char title[] = "SS-OREH";
 
   // App Variables
   InitWindow(screenWidth, screenHeight, title);
@@ -62,23 +75,33 @@ int main(void) {
   bool isSunlight = true;
 
   // Default Variables
-  GameData data = {0};
+  GameData data = {0}; // GAMEDATA
   data.whPerClick = 0.5;
+  data.moneyPerWh = 1.0;
 
-  Battery battery = {0};
+  Battery battery = {0}; // BATTERY
   data.activeBattery = 1;
+  data.lvlOfBattery = 0;
+  battery.multiplier = 1.6;
+  battery.lvlUpPrice = 0.0;
   setBattery(&battery, 1);
 
-  Generator generator = {0};
+  Generator generator = {0}; // GENERATOR
   data.activeGenerator = 1;
-  setGenerator(&generator, data.activeGenerator);
+  data.lvlOfGenerator = 0.0;
   generator.efficiency = 1.0;
+  generator.lvlUpPrice = 0.0;
+  setGenerator(&generator, &data, data.activeGenerator);
   bool generating = false;
 
   // Color Pallete
   Color bgColor = BLACK;
   Color neonGreen = {57, 255, 20, 255};
   Color warning = {255, 10, 10, 255};
+
+  // Next Upgrades
+  char nextBatteryUpgrade[30];
+  char nextGeneratorUpgrade[30];
 
   // Application Run
   while (!WindowShouldClose()) {
@@ -98,25 +121,61 @@ int main(void) {
 
       // Draw Basic Outlines
       DrawRectangleLines(6, 6, screenWidth - 12, screenHeight - 12, neonGreen);
-      DrawRectangleLines(6, 6, screenWidth / 3 - 12, screenHeight - 12,
-                         neonGreen);
+      DrawRectangleLines(6, 6, screenWidth / 3, screenHeight - 12, neonGreen);
       DrawRectangleLines(6, 6, (screenWidth / 3) * 2 - 12, screenHeight - 12,
                          neonGreen);
       DrawRectangleLines(6, 6, screenWidth - 12, blockHeight + 3, neonGreen);
-      DrawRectangleLines(6, 6, screenWidth / 3 - 12, screenHeight / 3,
-                         neonGreen);
-      DrawRectangleLines(6, 6, screenWidth - 12, (screenHeight / 3) * 2,
+      DrawRectangleLines(6, 6, screenWidth / 3, screenHeight / 3, neonGreen);
+      DrawRectangleLines(6, 6, screenWidth / 3, (screenHeight / 3) * 2,
                          neonGreen);
       DrawRectangleLines(6, 6, screenWidth - 12, blockHeight + 6, neonGreen);
+      DrawLine(screenWidth / 3 + 6, screenHeight / 2 + blockHeight / 2,
+               screenWidth - 6, screenHeight / 2 + blockHeight / 2, neonGreen);
+      // Headers
       DrawText("Upgrades:", screenWidth / 2 - MeasureText("Upgrades:", 20) / 2,
                blockHeight / 2, 20, neonGreen);
-      DrawText("More Control:",
-               (screenWidth / 6) * 5 - MeasureText("More Control:", 20) / 2,
+      DrawText("Personal Upgrades&Control:",
+               (screenWidth / 6) * 5 -
+                   MeasureText("Personal Upgrades&Control:", 20) / 2,
                blockHeight / 2, 20, neonGreen);
-      Rectangle onOffButton = {12, blockHeight + 16, (screenWidth / 3 - 24),
-                               blockHeight * 2};
+
+      char moneyText[30];
+      snprintf(moneyText, sizeof(moneyText), "Money $: %0.1f", data.money);
+      DrawText(moneyText, screenWidth / 6 - MeasureText(moneyText, 20) / 2, 12,
+               20, neonGreen);
+
+#pragma region Exchange for Money
+      Rectangle sellButton = {screenWidth - screenWidth / 3 - 1,
+                              3 * 6 + blockHeight, screenWidth / 3 - 10,
+                              (screenHeight / 2 - blockHeight / 2) / 4};
+      isHovering = CheckCollisionPointRec(mousePoint, sellButton);
+      isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+      DrawRectangleRec(sellButton, isHovering ? GRAY : BLACK);
+      DrawRectangleLines(screenWidth - screenWidth / 3 - 1, 3 * 6 + blockHeight,
+                         screenWidth / 3 - 10,
+                         (screenHeight / 2 - blockHeight / 2) / 4, neonGreen);
+
+      DrawText("Sell Energy",
+               (screenWidth / 6) * 5 - MeasureText("Sell Energy", 20) / 2,
+               4 * 6 + blockHeight, 20, neonGreen);
+
+      char moneyPerWh[30];
+      snprintf(moneyPerWh, sizeof(moneyPerWh), "Money per Wh: %0.1f$",
+               data.moneyPerWh);
+      DrawText(moneyPerWh,
+               (screenWidth / 6) * 5 - MeasureText(moneyPerWh, 20) / 2,
+               4 * 6 + blockHeight + 30, 20, neonGreen);
+
+      if (data.batteryCharge > 0.0 && isClicked) {
+        data.money += data.moneyPerWh * data.batteryCharge;
+        data.batteryCharge -= data.batteryCharge;
+      }
+
+#pragma endregion
 
 #pragma region Turn On/Off
+      Rectangle onOffButton = {10, blockHeight + 16, (screenWidth / 3 - 10),
+                               blockHeight * 2};
       isHovering = CheckCollisionPointRec(mousePoint, onOffButton);
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
       DrawRectangleRec(onOffButton, isHovering ? GRAY : BLACK);
@@ -178,6 +237,9 @@ int main(void) {
           dayTimer = 0.0f;
         }
       }
+#pragma endregion
+#pragma endregion Inventory
+
 #pragma endregion
 #pragma region Battery
 
@@ -250,7 +312,55 @@ int main(void) {
       }
 #pragma endregion
 #pragma region Upgrades
+      // Setting Prices
+
+      if (data.lvlOfBattery == 0) { // Basic Energy Storage Upgrade
+        battery.lvlUpPrice = 10250.0;
+        strcpy(nextBatteryUpgrade, "Mid-Tier Energy Upgrade");
+      } else if (data.lvlOfBattery == 1) { // Mid-Tier Energy Storage Upgrade
+        battery.lvlUpPrice = 75000.0;
+        strcpy(nextBatteryUpgrade, "Advanced Energy Upgrade");
+      } else if (data.lvlOfBattery == 2) { // Advanced Energy Storage Upgrade
+        battery.lvlUpPrice = 120000.0;
+        strcpy(nextBatteryUpgrade, "Premium Energy Upgrade");
+      } else if (data.lvlOfBattery == 3) { // Premium Energy Storage Upgrade
+        battery.lvlUpPrice = 1000000.0;
+      }
+
+      if (data.lvlOfGenerator == 0) {
+        //
+      }
+
       // Battery Upgrade
+      // Variables
+      Rectangle UpgradeBatteryButton = {
+          (screenWidth / 3) + 8, 3 * 6 + blockHeight, screenWidth / 3 - 18,
+          (screenHeight / 2 - blockHeight / 2) / 4};
+      isHovering = CheckCollisionPointRec(mousePoint, UpgradeBatteryButton);
+      isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+      DrawRectangleRec(UpgradeBatteryButton, isHovering ? GRAY : BLACK);
+      DrawRectangleLines((screenWidth / 3) + 10, 3 * 6 + blockHeight,
+                         screenWidth / 3 - 18,
+                         (screenHeight / 2 - blockHeight / 2) / 4, neonGreen);
+
+      // Function
+      char lvlUpPriceText[30];
+      snprintf(lvlUpPriceText, sizeof(lvlUpPriceText), "Price: %0.1f$",
+               battery.lvlUpPrice);
+      DrawText(nextBatteryUpgrade,
+               (screenWidth / 2) - MeasureText(nextBatteryUpgrade, 20) / 2,
+               (screenHeight / 2 - blockHeight / 2) / 4 + blockHeight * 0.25,
+               20, neonGreen);
+      DrawText(lvlUpPriceText,
+               (screenWidth / 2) - MeasureText(lvlUpPriceText, 20) / 2,
+               4 * 6 + blockHeight + 30, 20, neonGreen);
+      if (data.lvlOfBattery == 0) {
+        setBattery(&battery, 1);
+        if (isClicked && data.money >= battery.lvlUpPrice) {
+          data.money -= battery.lvlUpPrice;
+          data.lvlOfBattery = 1;
+        }
+      }
 
 #pragma endregion
     }
@@ -282,6 +392,8 @@ void setBattery(Battery *battery, int selected) {
     battery->maxChargeRate = 3.0;
     battery->defectRate = 1.0;
     battery->life = 100.0;
+
+    battery->price = 1600.0; // In $
     break;
   // Mid-Tier Energy Storage
   case 3:
@@ -327,7 +439,7 @@ void setBattery(Battery *battery, int selected) {
 #pragma endregion
 
 #pragma region Setting Generators
-void setGenerator(Generator *generator, int selected) {
+void setGenerator(Generator *generator, GameData *data, int selected) {
   switch (selected) {
   case 1:
     strcpy(generator->name, "Hand Crank");
@@ -337,7 +449,7 @@ void setGenerator(Generator *generator, int selected) {
   // Basic Energy Generation
   case 2:
     strcpy(generator->name, "Solar Cells");
-    generator->generatesPerSecond = 50.0 / 60 / 60; // In hours
+    generator->generatesPerSecond = (50.0 / 60 / 60); // In hours
     generator->damage = 5.0 / 60 / 60;
     break;
     strcpy(generator->name, "Small Wind Turbine");
