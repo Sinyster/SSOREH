@@ -12,8 +12,10 @@ typedef struct {
 
   // Battery
   double batteryCharge;
+  int activeBattery;
 
   // Generator
+  int activeGenerator;
 } GameData;
 
 typedef struct {
@@ -21,7 +23,6 @@ typedef struct {
   double capacity;
   double health;
   double price;
-  double charge;
   double maxChargePerSecond;
 } Battery;
 
@@ -67,13 +68,24 @@ int main(void) {
 
   // DEFAULT VARIABLES
   GameData data = {0};
+  data.activeBattery = 1;
+  data.activeGenerator = 1;
+
   Battery bat = {0};
+  setBattery(&bat, data.activeBattery);
+
   Generator gen = {0};
+  setGenerator(&gen, data.activeGenerator);
+
   Stuff stuff = {0};
 
   // Panel Variables
   const int PanelHeight = 35;
-  const int headerFontSize = 20;
+  const int headerFontSize = 22;
+  const int textFontSize = 20;
+
+  const int buttonWidth = 250;
+  const int buttonHeight = 75;
 
   // Game Variables;
   bool isHovering = false;
@@ -167,11 +179,74 @@ int main(void) {
                screenHeight - PanelHeight - PanelHeight * 0.1, linesColor);
 
       // FIRST COLUMN
-        
+      DrawText("Battery: ", PanelHeight, PanelHeight * 2, headerFontSize,
+               textColor);
+
+      DrawText(bat.name, PanelHeight + MeasureText("Battery: ", headerFontSize),
+               PanelHeight * 2, headerFontSize, textColor);
+
+      // Capacity
+      char capacityText[30];
+      snprintf(capacityText, sizeof(capacityText), "Max. Capacity: %0.0f Wh",
+               bat.capacity);
+      DrawText(capacityText, PanelHeight, PanelHeight * 3, textFontSize,
+               textColor);
+
+      // Max Charge
+      char maxChargeText[30];
+      snprintf(maxChargeText, sizeof(maxChargeText), "Max. Charge: %0.1f Wh/s",
+               bat.maxChargePerSecond);
+      DrawText(maxChargeText, PanelHeight, PanelHeight * 3 + textFontSize,
+               textFontSize, textColor);
+
+      // Actual Charge
+      char chargeText[30];
+      snprintf(chargeText, sizeof(chargeText), "Actual Charge: %0.1f Wh",
+               data.batteryCharge);
+      DrawText(chargeText, PanelHeight, PanelHeight * 4 + textFontSize,
+               textFontSize, textColor);
 
       // SECOND COLUMN
+      DrawText("Source: ", screenWidth / 3 + PanelHeight, PanelHeight * 2,
+               headerFontSize, textColor);
+      DrawText(gen.name,
+               screenWidth / 3 + PanelHeight +
+                   MeasureText("Source: ", headerFontSize),
+               PanelHeight * 2, headerFontSize, textColor);
 
-#pragma region Sunlight Function
+      char genPerClick[30];
+      snprintf(genPerClick, sizeof(genPerClick),
+               "Generates per Click: %0.1f Wh", gen.whPerClick);
+      DrawText(genPerClick, screenWidth / 3 + PanelHeight, PanelHeight * 3,
+               textFontSize, textColor);
+
+#pragma region Generation
+      if (strcmp(gen.name, "Hand Crank") == 0) {
+        Rectangle handCrank = {screenWidth / 2 - buttonWidth / 2,
+                               screenHeight - PanelHeight - PanelHeight * 0.1 -
+                                   buttonHeight,
+                               buttonWidth, buttonHeight};
+        isHovering = CheckCollisionPointRec(mousePoint, handCrank);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        DrawRectangleRec(handCrank, isHovering ? GRAY : LIGHTGRAY);
+        DrawText("Rotate the Crank",
+                 screenWidth / 2 -
+                     MeasureText("Rotate the Crank", headerFontSize) / 2,
+                 screenHeight - PanelHeight - PanelHeight * 0.1 -
+                     buttonHeight / 2 - headerFontSize / 2,
+                 headerFontSize, headerColor);
+        if (isClicked) {
+          data.batteryCharge += gen.whPerClick;
+        }
+      }
+
+#pragma endregion
+
+#pragma region Battery Cacl
+
+#pragma endregion
+
+#pragma region Sunlight Func
       // Calculation
       if (isDay) {
         dayTimer += GetFrameTime();
@@ -206,7 +281,7 @@ int main(void) {
 void setGenerator(Generator *gen, int selected) {
   if (selected == 1) { // Hand Crank
     strcpy(gen->name, "Hand Crank");
-    gen->whPerClick = 1.0;
+    gen->whPerClick = 0.5;
   }
 }
 void setBattery(Battery *bat, int selected) {
@@ -216,4 +291,10 @@ void setBattery(Battery *bat, int selected) {
     bat->maxChargePerSecond = 1.0;
   }
 }
-void setStuff(Stuff *stuff, int selected) {}
+void setStuff(Stuff *stuff, int selected) {
+  if (selected == 1) { // Light Bulb
+    strcpy(stuff->name, "Light Bulb");
+    stuff->drainPerSecond = 0.2; // Wh
+    stuff->moneyPerSecond = 0.1; // Wh
+  }
+}
