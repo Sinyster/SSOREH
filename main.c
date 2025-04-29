@@ -16,6 +16,9 @@ typedef struct {
 
   // Generator
   int activeGenerator;
+
+  // Stuff
+  int activeStuff
 } GameData;
 
 typedef struct {
@@ -24,6 +27,7 @@ typedef struct {
   double health;
   double price;
   double maxChargePerSecond;
+  float percentage;
 } Battery;
 
 typedef struct {
@@ -70,6 +74,7 @@ int main(void) {
   GameData data = {0};
   data.activeBattery = 1;
   data.activeGenerator = 1;
+  data.activeStuff = 1;
 
   Battery bat = {0};
   setBattery(&bat, data.activeBattery);
@@ -78,6 +83,7 @@ int main(void) {
   setGenerator(&gen, data.activeGenerator);
 
   Stuff stuff = {0};
+  setStuff(&stuff, data.activeStuff);
 
   // Panel Variables
   const int PanelHeight = 35;
@@ -134,9 +140,6 @@ int main(void) {
     DrawLine(0, screenHeight - PanelHeight, screenWidth,
              screenHeight - PanelHeight, linesColor);
 
-    // Drawing Money
-    char moneyText[30];
-    snprintf(moneyText, sizeof(moneyText), "$ %0.2f", data.money);
     DrawLine(screenWidth / 5, (screenHeight - PanelHeight) + PanelHeight * 0.1,
              screenWidth / 5, (screenHeight - PanelHeight) + PanelHeight * 0.9,
              linesColor);
@@ -144,6 +147,13 @@ int main(void) {
              (screenHeight - PanelHeight) + PanelHeight * 0.1,
              screenWidth / 5 * 2,
              (screenHeight - PanelHeight) + PanelHeight * 0.9, linesColor);
+    DrawLine(screenWidth / 5 * 3,
+             (screenHeight - PanelHeight) + PanelHeight * 0.1,
+             screenWidth / 5 * 3,
+             (screenHeight - PanelHeight) + PanelHeight * 0.9, linesColor);
+    // Drawing Money
+    char moneyText[30];
+    snprintf(moneyText, sizeof(moneyText), "$ %0.2f", data.money);
     DrawText(moneyText,
              (screenWidth / 5) / 2 - MeasureText(moneyText, headerFontSize) / 2,
              screenHeight - PanelHeight / 2 - headerFontSize / 2,
@@ -155,6 +165,15 @@ int main(void) {
     DrawText(sunlightText,
              (screenWidth / 5 * 2) - (screenWidth / 5 / 2) -
                  MeasureText(sunlightText, headerFontSize) / 2,
+             screenHeight - PanelHeight / 2 - headerFontSize / 2,
+             headerFontSize, headerColor);
+
+    // Battery Charge
+    char percentageText[30];
+    snprintf(percentageText, sizeof(percentageText), "Charge in %: %0.2f",
+             bat.percentage);
+    DrawText(percentageText,
+             screenWidth / 2 - MeasureText(percentageText, headerFontSize) / 2,
              screenHeight - PanelHeight / 2 - headerFontSize / 2,
              headerFontSize, headerColor);
 #pragma endregion
@@ -179,6 +198,7 @@ int main(void) {
                screenHeight - PanelHeight - PanelHeight * 0.1, linesColor);
 
       // FIRST COLUMN
+      // =======================================================================================================================================
       DrawText("Battery: ", PanelHeight, PanelHeight * 2, headerFontSize,
                textColor);
 
@@ -205,20 +225,31 @@ int main(void) {
                data.batteryCharge);
       DrawText(chargeText, PanelHeight, PanelHeight * 4 + textFontSize,
                textFontSize, textColor);
+      DrawText(percentageText, PanelHeight, PanelHeight * 4 + textFontSize * 2,
+               textFontSize, textColor);
 
       // SECOND COLUMN
+      // =======================================================================================================================================
       DrawText("Source: ", screenWidth / 3 + PanelHeight, PanelHeight * 2,
                headerFontSize, textColor);
       DrawText(gen.name,
                screenWidth / 3 + PanelHeight +
                    MeasureText("Source: ", headerFontSize),
                PanelHeight * 2, headerFontSize, textColor);
-
       char genPerClick[30];
       snprintf(genPerClick, sizeof(genPerClick),
                "Generates per Click: %0.1f Wh", gen.whPerClick);
       DrawText(genPerClick, screenWidth / 3 + PanelHeight, PanelHeight * 3,
                textFontSize, textColor);
+
+      // THIRD COLUMN
+      // =======================================================================================================================================
+      DrawText("Powering: ", screenWidth / 3 * 2 + PanelHeight, PanelHeight * 2,
+               headerFontSize, textColor);
+      DrawText(stuff.name,
+               screenWidth / 3 * 2 + PanelHeight +
+                   MeasureText("Powering: ", headerFontSize),
+               PanelHeight * 2, headerFontSize, textColor);
 
 #pragma region Generation
       if (strcmp(gen.name, "Hand Crank") == 0) {
@@ -242,7 +273,10 @@ int main(void) {
 
 #pragma endregion
 
-#pragma region Battery Cacl
+#pragma region Battery Calc
+
+      // Battery Percentage
+      bat.percentage = 100.0f * (data.batteryCharge / bat.capacity);
 
 #pragma endregion
 
