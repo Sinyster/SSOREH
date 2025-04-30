@@ -96,7 +96,7 @@ int main(void) {
   // Game Variables;
   bool isHovering = false;
   bool isClicked = false;
-  bool isGenerating = false;
+  bool isSelling = false;
 
   static float dayTimer = 0.0f;
   bool isDay = true;
@@ -109,6 +109,10 @@ int main(void) {
     Vector2 mousePoint = GetMousePosition();
     BeginDrawing();
     ClearBackground(bgColor);
+
+    if (data.batteryCharge <= 0.0) {
+      data.batteryCharge = 0.0;
+    }
 
 #pragma region Upper Panel
     DrawRectangle(0, 0, screenWidth, PanelHeight, bgColor2);
@@ -267,17 +271,14 @@ int main(void) {
 #pragma region Generation
       if (strcmp(gen.name, "Hand Crank") == 0) {
         Rectangle handCrank = {screenWidth / 2 - buttonWidth / 2,
-                               screenHeight - PanelHeight - PanelHeight * 0.1 -
-                                   buttonHeight,
-                               buttonWidth, buttonHeight};
+                               screenHeight / 2, buttonWidth, buttonHeight};
         isHovering = CheckCollisionPointRec(mousePoint, handCrank);
         isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
         DrawRectangleRec(handCrank, isHovering ? GRAY : LIGHTGRAY);
         DrawText("Rotate the Crank",
                  screenWidth / 2 -
                      MeasureText("Rotate the Crank", headerFontSize) / 2,
-                 screenHeight - PanelHeight - PanelHeight * 0.1 -
-                     buttonHeight / 2 - headerFontSize / 2,
+                 screenHeight / 2 - headerFontSize / 2 + buttonHeight / 2,
                  headerFontSize, headerColor);
         if (isClicked) {
           data.batteryCharge += gen.whPerClick;
@@ -287,10 +288,42 @@ int main(void) {
 #pragma endregion
 
 #pragma region Selling
-      if (isGenerating) {
+      // Rendering button
+      Rectangle sellButton = {screenWidth / 6 * 5 - buttonWidth / 2,
+                              screenHeight / 2, buttonWidth, buttonHeight};
+      isHovering = CheckCollisionPointRec(mousePoint, sellButton);
+      isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+      DrawRectangleRec(sellButton, isHovering ? GRAY : LIGHTGRAY);
+
+      if (isClicked) {
+        isSelling = isSelling ? false : true;
+      }
+
+      // TURN ON/OFF TEXT
+      if (data.batteryCharge > 0.0) {
+        if (isSelling) {
+          DrawText("Turn Off",
+                   (screenWidth / 6 * 5) -
+                       MeasureText("Turn Off", headerFontSize) / 2,
+                   screenHeight / 2 + buttonHeight / 2 - headerFontSize / 2,
+                   headerFontSize, headerColor);
+        } else {
+          DrawText("Turn On",
+                   (screenWidth / 6 * 5) -
+                       MeasureText("Turn On", headerFontSize) / 2,
+                   screenHeight / 2 + buttonHeight / 2 - headerFontSize / 2,
+                   headerFontSize, headerColor);
+        }
+      }
+
+      // Sell Function
+      if (isSelling) {
         if (data.batteryCharge > 0.0) {
           data.batteryCharge -= stuff.drainPerSecond / targetFps;
           data.money += stuff.moneyPerSecond / targetFps;
+        } else {
+          isSelling = false;
         }
       }
 
