@@ -16,6 +16,7 @@ typedef struct {
 
   // Generator
   int activeGenerator;
+  int numberOfSolarCells;
 
   // Stuff
   int activeStuff
@@ -34,12 +35,15 @@ typedef struct {
   char name[30];
   double whPerClick;
   double whPerSecond;
+  double price;
+  float efficiency;
 } Generator;
 
 typedef struct {
   char name[30];
   double drainPerSecond;
   double moneyPerSecond;
+  double price;
 } Stuff;
 
 void setGenerator(Generator *gen, int selected);
@@ -59,7 +63,7 @@ int main(void) {
   // SetExitKey(KEY_NULL);
 
   // Scenes
-  typedef enum { SCENE_MAIN } GameScenes;
+  typedef enum { SCENE_MAIN, SCENE_UPGRADES } GameScenes;
   GameScenes currentScene = SCENE_MAIN;
 
   // Color Pallete
@@ -117,14 +121,17 @@ int main(void) {
 #pragma region Upper Panel
     DrawRectangle(0, 0, screenWidth, PanelHeight, bgColor2);
     DrawLine(0, PanelHeight, screenWidth, PanelHeight, linesColor);
-
-    // First Part
     DrawLine(screenWidth / 5, PanelHeight * 0.1, screenWidth / 5, PanelHeight,
              linesColor);
+    DrawLine(screenWidth / 5 * 2, PanelHeight * 0.1, screenWidth / 5 * 2,
+             PanelHeight * 0.9, linesColor);
+
+    // First Part
     Rectangle mainSceneButton = {3, PanelHeight * 0.1, screenWidth / 5 - 6,
                                  PanelHeight * 0.8};
     isHovering = CheckCollisionPointRec(mousePoint, mainSceneButton);
     isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
     DrawRectangleRec(mainSceneButton, isHovering ? hoverBg : bgColor2);
     DrawText("Game",
              (screenWidth / 5) / 2 - MeasureText("Game", headerFontSize) / 2,
@@ -134,6 +141,20 @@ int main(void) {
       currentScene = SCENE_MAIN;
     }
     // Second Part
+    Rectangle upgradesButton = {screenWidth / 5 + 3, PanelHeight * 0.1,
+                                screenWidth / 5 - 6, PanelHeight * 0.8};
+    isHovering = CheckCollisionPointRec(mousePoint, upgradesButton);
+    isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+    DrawRectangleRec(upgradesButton, isHovering ? hoverBg : bgColor2);
+    DrawText("Upgrades",
+             screenWidth / 5 + (screenWidth / 5 / 2) -
+                 MeasureText("Upgrades", headerFontSize) / 2,
+             PanelHeight / 2 - headerFontSize / 2, headerFontSize, headerColor);
+
+    if (isClicked && currentScene != SCENE_UPGRADES) {
+      currentScene = SCENE_UPGRADES;
+    }
     // Third Part
     // Forth Part
     // Fifth Part
@@ -184,7 +205,7 @@ int main(void) {
 #pragma endregion
 
     // ===========================================================================================================
-
+#pragma region ===MAIN===
     if (currentScene == SCENE_MAIN) {
       // Editing Upper Panel
       DrawLine((screenWidth / 5) / 2 - MeasureText("Game", headerFontSize),
@@ -288,33 +309,33 @@ int main(void) {
 #pragma endregion
 
 #pragma region Selling
-      // Rendering button
+      // Rendering
       Rectangle sellButton = {screenWidth / 6 * 5 - buttonWidth / 2,
                               screenHeight / 2, buttonWidth, buttonHeight};
       isHovering = CheckCollisionPointRec(mousePoint, sellButton);
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
-      DrawRectangleRec(sellButton, isHovering ? GRAY : LIGHTGRAY);
+      DrawRectangleRec(sellButton, isHovering ? hoverBg : bgColor2);
 
       if (isClicked) {
-        isSelling = isSelling ? false : true;
+        if (data.batteryCharge > 0.0) {
+          isSelling = isSelling ? false : true;
+        }
       }
 
       // TURN ON/OFF TEXT
-      if (data.batteryCharge > 0.0) {
-        if (isSelling) {
-          DrawText("Turn Off",
-                   (screenWidth / 6 * 5) -
-                       MeasureText("Turn Off", headerFontSize) / 2,
-                   screenHeight / 2 + buttonHeight / 2 - headerFontSize / 2,
-                   headerFontSize, headerColor);
-        } else {
-          DrawText("Turn On",
-                   (screenWidth / 6 * 5) -
-                       MeasureText("Turn On", headerFontSize) / 2,
-                   screenHeight / 2 + buttonHeight / 2 - headerFontSize / 2,
-                   headerFontSize, headerColor);
-        }
+      if (isSelling) {
+        DrawText("Turn Off",
+                 (screenWidth / 6 * 5) -
+                     MeasureText("Turn Off", headerFontSize) / 2,
+                 screenHeight / 2 + buttonHeight / 2 - headerFontSize / 2,
+                 headerFontSize, headerColor);
+      } else {
+        DrawText("Turn On",
+                 (screenWidth / 6 * 5) -
+                     MeasureText("Turn On", headerFontSize) / 2,
+                 screenHeight / 2 + buttonHeight / 2 - headerFontSize / 2,
+                 headerFontSize, headerColor);
       }
 
       // Sell Function
@@ -361,6 +382,32 @@ int main(void) {
       }
 
 #pragma endregion
+#pragma region ===UPGR===
+    } else if (currentScene == SCENE_UPGRADES) {
+      // Basic Scene Render
+      ClearBackground(bgColor);
+
+      // Separation Lines
+      DrawLine(screenWidth / 3, PanelHeight + PanelHeight * 0.1,
+               screenWidth / 3, screenHeight - PanelHeight - PanelHeight * 0.1,
+               linesColor);
+
+      DrawLine(screenWidth / 3 * 2, PanelHeight + PanelHeight * 0.1,
+               screenWidth / 3 * 2,
+               screenHeight - PanelHeight - PanelHeight * 0.1, linesColor);
+
+      // Editing Upper Panel
+      DrawLine(screenWidth / 5 + (screenWidth / 5 / 2) -
+                   MeasureText("Upgrades", headerFontSize),
+               PanelHeight * 0.9,
+               screenWidth / 5 + (screenWidth / 5 / 2) +
+                   MeasureText("Upgrades", headerFontSize),
+               PanelHeight * 0.9, linesColor);
+
+      // Headers
+      DrawText("Batteries",
+               screenWidth / 6 - MeasureText("Batteries", headerFontSize) / 2,
+               PanelHeight * 2, headerFontSize, headerColor);
     }
     EndDrawing();
   }
@@ -372,6 +419,9 @@ void setGenerator(Generator *gen, int selected) {
   if (selected == 1) { // Hand Crank
     strcpy(gen->name, "Hand Crank");
     gen->whPerClick = 0.5;
+  } else if (selected == 2) {
+    strcpy(gen->name, "Solar cells");
+    gen->whPerSecond = 50.0 / 60.0 / 60.0;
   }
 }
 void setBattery(Battery *bat, int selected) {
@@ -379,6 +429,10 @@ void setBattery(Battery *bat, int selected) {
     strcpy(bat->name, "Lithium-Ion Battery");
     bat->capacity = 1000.0;
     bat->maxChargePerSecond = 1.0;
+  } else if (selected == 2) {
+    strcpy(bat->name, "Lead-Acid Battery");
+    bat->capacity = 1500.0;
+    bat->maxChargePerSecond = 3.0;
   }
 }
 void setStuff(Stuff *stuff, int selected) {
@@ -386,5 +440,6 @@ void setStuff(Stuff *stuff, int selected) {
     strcpy(stuff->name, "Light Bulb");
     stuff->drainPerSecond = 0.2; // Wh
     stuff->moneyPerSecond = 0.1; // Wh
+  } else if (selected == 2) {
   }
 }
