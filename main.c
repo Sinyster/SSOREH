@@ -27,7 +27,7 @@ typedef struct {
 
 typedef struct {
   char name[30];
-  char next[30];
+  char next[45];
 
   int lvlUnlocked;
   double capacity;
@@ -40,7 +40,7 @@ typedef struct {
 
 typedef struct {
   char name[30];
-  char next[30];
+  char next[45];
 
   int lvlUnlocked;
   double whPerClick;
@@ -54,7 +54,7 @@ typedef struct {
 
 typedef struct {
   char name[30];
-  char next[30];
+  char next[45];
 
   int lvlUnlocked;
   double drainPerSecond;
@@ -90,6 +90,9 @@ int main(void) {
   Color textColor = GRAY;
   Color linesColor = GRAY;
 
+  Color red = RED;
+  Color green = GREEN;
+
   // DEFAULT VARIABLES
   GameData data = {0};
   data.activeBattery = 1;
@@ -102,15 +105,12 @@ int main(void) {
 
   Battery bat = {0};
   setBattery(&bat, data.activeBattery, data.lvlOfBattery);
-  bat.lvlUnlocked = 1;
 
   Generator gen = {0};
   setGenerator(&gen, data.activeGenerator, data.lvlOfGenerator);
-  gen.lvlUnlocked = 1;
 
   Stuff stuff = {0};
   setStuff(&stuff, data.activeStuff, data.lvlOfStuff);
-  stuff.lvlUnlocked = 1;
 
   // Panel Variables
   const int PanelHeight = 35;
@@ -136,6 +136,10 @@ int main(void) {
     Vector2 mousePoint = GetMousePosition();
     BeginDrawing();
     ClearBackground(bgColor);
+
+    setBattery(&bat, data.activeBattery, data.lvlOfBattery);
+    setGenerator(&gen, data.activeGenerator, data.lvlOfGenerator);
+    setStuff(&stuff, data.activeStuff, data.lvlOfStuff);
 
     if (data.batteryCharge <= 0.0) {
       data.batteryCharge = 0.0;
@@ -438,6 +442,53 @@ int main(void) {
                screenWidth / 6 * 5 -
                    MeasureText("Electric Machines", headerFontSize) / 2,
                PanelHeight * 2, headerFontSize, headerColor);
+
+      // Drawing Upgrades
+      // =========================================================================
+      // Battery Section =========
+      // Draw Battery Next Upgrade
+      Rectangle batteryNextUpgrade = {
+          screenWidth / 6 - ((screenWidth / 3 - 12) / 2), PanelHeight * 3,
+          screenWidth / 3 - 12, buttonHeight};
+      isHovering = CheckCollisionPointRec(mousePoint, batteryNextUpgrade);
+      isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+      DrawRectangleRec(batteryNextUpgrade, isHovering ? hoverBg : bgColor2);
+
+      DrawText(bat.next, screenWidth / 6 - ((screenWidth / 3 - 12) / 2) + 10,
+               PanelHeight * 3 + 4, headerFontSize, headerColor);
+
+      // Calculating and Drawing Price
+      DrawText("Price: ", screenWidth / 6 - ((screenWidth / 3 - 12) / 2) + 10,
+               PanelHeight * 3 + 6 + textFontSize, textFontSize, headerColor);
+      DrawText("Unlocks new technology for storing energy.",
+               screenWidth / 6 - ((screenWidth / 3 - 12) / 2) + 10,
+               PanelHeight * 3 + 8 + textFontSize * 2, textFontSize * 0.9,
+               headerColor);
+
+      char nextBatPriceText[30];
+      snprintf(nextBatPriceText, sizeof(nextBatPriceText), "%0.1f $",
+               bat.upgradePrice);
+      if (data.money > bat.upgradePrice) {
+        DrawText(nextBatPriceText,
+                 screenWidth / 6 - ((screenWidth / 3 - 12) / 2) + 10 +
+                     MeasureText("Price: ", textFontSize),
+                 PanelHeight * 3 + 6 + textFontSize, textFontSize, green);
+      } else {
+        DrawText(nextBatPriceText,
+                 screenWidth / 6 - ((screenWidth / 3 - 12) / 2) + 10 +
+                     MeasureText("Price: ", textFontSize),
+                 PanelHeight * 3 + 6 + textFontSize, textFontSize, red);
+      }
+
+      // Buy
+      if (isClicked && data.money >= bat.upgradePrice) {
+        data.money -= bat.upgradePrice;
+        data.lvlOfBattery = 2;
+      }
+
+
+      // RENDER BATTERY UPGRADES
+      
     }
     EndDrawing();
   }
@@ -447,10 +498,10 @@ int main(void) {
 
 void setGenerator(Generator *gen, int selected, int lvl) {
   if (lvl == 1) {
-    strcpy(gen->next, "Basic Energy Generation Technology");
+    strcpy(gen->next, "Basic Energy Generation");
     gen->price = 2500.0;
   } else if (lvl == 2) {
-    strcpy(gen->next, "Mid-Tier Energy Generation Technology");
+    strcpy(gen->next, "Mid-Tier Energy Generation");
     gen->price = 15000.0;
   }
 
@@ -470,10 +521,10 @@ void setGenerator(Generator *gen, int selected, int lvl) {
 }
 void setBattery(Battery *bat, int selected, int lvl) {
   if (lvl == 1) {
-    strcpy(bat->next, "Basic Energy Storage Technology");
-    bat->upgradePrice = 10000.0;
+    strcpy(bat->next, "Basic Energy Storage");
+    bat->upgradePrice = 5.0;
   } else if (lvl == 2) {
-    strcpy(bat->next, "Mid-Tier Energy Storage Technology");
+    strcpy(bat->next, "Mid-Tier Energy Storage");
     bat->upgradePrice = 100000.0;
   }
 
