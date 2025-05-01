@@ -11,44 +11,60 @@ typedef struct {
   int timeOfDay;
 
   // Battery
+  int lvlOfBattery;
   double batteryCharge;
   int activeBattery;
 
   // Generator
+  int lvlOfGenerator;
   int activeGenerator;
   int numberOfSolarCells;
 
   // Stuff
+  int lvlOfStuff;
   int activeStuff
 } GameData;
 
 typedef struct {
   char name[30];
+  char next[30];
+
+  int lvlUnlocked;
   double capacity;
   double health;
   double price;
+  double upgradePrice;
   double maxChargePerSecond;
   float percentage;
 } Battery;
 
 typedef struct {
   char name[30];
+  char next[30];
+
+  int lvlUnlocked;
   double whPerClick;
   double whPerSecond;
   double price;
+  double upgradePrice;
   float efficiency;
+
+  double maxChargePerSecond;
 } Generator;
 
 typedef struct {
   char name[30];
+  char next[30];
+
+  int lvlUnlocked;
   double drainPerSecond;
   double moneyPerSecond;
   double price;
 } Stuff;
 
-void setGenerator(Generator *gen, int selected);
-void setBattery(Battery *bat, int selected);
-void setStuff(Stuff *stuff, int selected);
+void setGenerator(Generator *gen, int selected, int lvl);
+void setBattery(Battery *bat, int selected, int lvl);
+void setStuff(Stuff *stuff, int selected, int lvl);
 
 int main(void) {
   // App Variables
@@ -80,14 +96,21 @@ int main(void) {
   data.activeGenerator = 1;
   data.activeStuff = 1;
 
+  data.lvlOfBattery = 1;
+  data.lvlOfGenerator = 1;
+  data.lvlOfStuff = 1;
+
   Battery bat = {0};
-  setBattery(&bat, data.activeBattery);
+  setBattery(&bat, data.activeBattery, data.lvlOfBattery);
+  bat.lvlUnlocked = 1;
 
   Generator gen = {0};
-  setGenerator(&gen, data.activeGenerator);
+  setGenerator(&gen, data.activeGenerator, data.lvlOfGenerator);
+  gen.lvlUnlocked = 1;
 
   Stuff stuff = {0};
-  setStuff(&stuff, data.activeStuff);
+  setStuff(&stuff, data.activeStuff, data.lvlOfStuff);
+  stuff.lvlUnlocked = 1;
 
   // Panel Variables
   const int PanelHeight = 35;
@@ -408,6 +431,13 @@ int main(void) {
       DrawText("Batteries",
                screenWidth / 6 - MeasureText("Batteries", headerFontSize) / 2,
                PanelHeight * 2, headerFontSize, headerColor);
+      DrawText("Generators",
+               screenWidth / 2 - MeasureText("Generators", headerFontSize) / 2,
+               PanelHeight * 2, headerFontSize, headerColor);
+      DrawText("Electric Machines",
+               screenWidth / 6 * 5 -
+                   MeasureText("Electric Machines", headerFontSize) / 2,
+               PanelHeight * 2, headerFontSize, headerColor);
     }
     EndDrawing();
   }
@@ -415,31 +445,68 @@ int main(void) {
   return 0;
 }
 
-void setGenerator(Generator *gen, int selected) {
-  if (selected == 1) { // Hand Crank
+void setGenerator(Generator *gen, int selected, int lvl) {
+  if (lvl == 1) {
+    strcpy(gen->next, "Basic Energy Generation Technology");
+    gen->price = 2500.0;
+  } else if (lvl == 2) {
+    strcpy(gen->next, "Mid-Tier Energy Generation Technology");
+    gen->price = 15000.0;
+  }
+
+  // Setting Generators
+  if (selected == 1 && lvl == 1) { // Hand Crank
     strcpy(gen->name, "Hand Crank");
     gen->whPerClick = 0.5;
-  } else if (selected == 2) {
+  }
+  if (selected == 2 && lvl == 2) { // Basic Energy Generation
     strcpy(gen->name, "Solar cells");
     gen->whPerSecond = 50.0 / 60.0 / 60.0;
   }
+  if (selected == 3 && lvl == 3) {
+    strcpy(gen->name, "Gasoline Engine");
+    gen->whPerSecond = 5.0;
+  }
 }
-void setBattery(Battery *bat, int selected) {
-  if (selected == 1) { // Basic Battery from Start
+void setBattery(Battery *bat, int selected, int lvl) {
+  if (lvl == 1) {
+    strcpy(bat->next, "Basic Energy Storage Technology");
+    bat->upgradePrice = 10000.0;
+  } else if (lvl == 2) {
+    strcpy(bat->next, "Mid-Tier Energy Storage Technology");
+    bat->upgradePrice = 100000.0;
+  }
+
+  // Setting Batteries
+  if (selected == 1 && lvl == 1) { // Basic Battery from Start
     strcpy(bat->name, "Lithium-Ion Battery");
     bat->capacity = 1000.0;
     bat->maxChargePerSecond = 1.0;
-  } else if (selected == 2) {
+  }
+  if (selected == 2 && lvl == 2) { // Basic Energy Storage
     strcpy(bat->name, "Lead-Acid Battery");
     bat->capacity = 1500.0;
     bat->maxChargePerSecond = 3.0;
   }
 }
-void setStuff(Stuff *stuff, int selected) {
-  if (selected == 1) { // Light Bulb
+void setStuff(Stuff *stuff, int selected, int lvl) {
+  if (lvl == 1) {
+    strcpy(stuff->next, "Portable Fan");
+    stuff->price = 500.0;
+  }
+  if (lvl == 2) {
+    //
+  }
+
+  // Setting Stuff
+  if (selected == 1 && lvl == 1) { // Light Bulb
     strcpy(stuff->name, "Light Bulb");
     stuff->drainPerSecond = 0.2; // Wh
     stuff->moneyPerSecond = 0.1; // Wh
-  } else if (selected == 2) {
+  }
+  if (selected == 2 && lvl == 2) {
+    strcpy(stuff->name, "Portable Fan");
+    stuff->drainPerSecond = 0.4;
+    stuff->moneyPerSecond = 0.3;
   }
 }
