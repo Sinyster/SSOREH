@@ -14,11 +14,13 @@ typedef struct {
   int lvlOfBattery;
   double batteryCharge;
   int activeBattery;
+  int UnlockedEnergyUpgrades;
 
   // Generator
   int lvlOfGenerator;
   int activeGenerator;
   int numberOfSolarCells;
+  int UnlockedGenerUpgrades;
 
   // Stuff
   int lvlOfStuff;
@@ -82,6 +84,14 @@ int main(void) {
   typedef enum { SCENE_MAIN, SCENE_UPGRADES } GameScenes;
   GameScenes currentScene = SCENE_MAIN;
 
+  // Energy Upgrades
+  typedef enum { E_BASE, E_BASIC_UPG, E_MIDTIER_UPG } BEU;
+  BEU currentEnergyUpgrades = E_BASE;
+
+  // Generation Upgrades
+  typedef enum { G_BASE, G_BASIC_UPG, G_MIDTIER_UPG } BGU;
+  BGU currentGenUpgrades = G_BASE;
+
   // Color Pallete
   Color bgColor = WHITE;
   Color bgColor2 = LIGHTGRAY;
@@ -102,6 +112,9 @@ int main(void) {
   data.lvlOfBattery = 1;
   data.lvlOfGenerator = 1;
   data.lvlOfStuff = 1;
+
+  data.UnlockedEnergyUpgrades = 1;
+  data.UnlockedGenerUpgrades = 1;
 
   Battery bat = {0};
   setBattery(&bat, data.activeBattery, data.lvlOfBattery);
@@ -131,6 +144,12 @@ int main(void) {
   const int dayMinute = 900;
   const int nightMinute = 540;
 
+  // Random Bool function because I dont know how to make it other way
+  bool boughtFirst = false;
+  bool boughtSecond = false;
+  bool boughtThird = false;
+  bool boughtForth = false;
+
   while (!WindowShouldClose()) {
     // Base Functions for All Scenes
     Vector2 mousePoint = GetMousePosition();
@@ -143,6 +162,23 @@ int main(void) {
 
     if (data.batteryCharge <= 0.0) {
       data.batteryCharge = 0.0;
+    }
+
+    // Setting up which upgrades to draw
+    if (data.UnlockedEnergyUpgrades == 1) {
+      currentEnergyUpgrades = E_BASE;
+    } else if (data.UnlockedEnergyUpgrades == 2) {
+      currentEnergyUpgrades = E_BASIC_UPG;
+    } else if (data.UnlockedEnergyUpgrades == 3) {
+      currentEnergyUpgrades = E_MIDTIER_UPG;
+    }
+
+    if (data.UnlockedGenerUpgrades == 1) {
+      currentGenUpgrades = G_BASE;
+    } else if (data.UnlockedGenerUpgrades == 2) {
+      currentGenUpgrades = G_BASIC_UPG;
+    } else if (data.UnlockedGenerUpgrades == 3) {
+      currentGenUpgrades = G_MIDTIER_UPG;
     }
 
 #pragma region Upper Panel
@@ -446,6 +482,20 @@ int main(void) {
       // Drawing Upgrades
       // =========================================================================
       // Battery Section =========
+      if (currentEnergyUpgrades == E_BASE) {
+        DrawText("No Upgrades.",
+                 screenWidth / 6 -
+                     MeasureText("No Upgrades.", headerFontSize) / 2,
+                 screenHeight / 2, headerFontSize, headerColor);
+      } else if (currentEnergyUpgrades == E_BASIC_UPG) {
+        Rectangle batUpgButton = {
+            screenWidth / 6 - ((screenWidth / 3 - 12) / 2),
+            PanelHeight * 4 + buttonHeight, screenWidth / 3 - 12, buttonHeight};
+        isHovering = CheckCollisionPointRec(mousePoint, batUpgButton);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+        DrawRectangleRec(batUpgButton, isHovering ? hoverBg : bgColor2);
+      }
+
       // Draw Battery Next Upgrade
       Rectangle batteryNextUpgrade = {
           screenWidth / 6 - ((screenWidth / 3 - 12) / 2), PanelHeight * 3,
@@ -484,11 +534,10 @@ int main(void) {
       if (isClicked && data.money >= bat.upgradePrice) {
         data.money -= bat.upgradePrice;
         data.lvlOfBattery = 2;
+        data.UnlockedEnergyUpgrades += 1;
       }
 
-
       // RENDER BATTERY UPGRADES
-      
     }
     EndDrawing();
   }
@@ -522,7 +571,7 @@ void setGenerator(Generator *gen, int selected, int lvl) {
 void setBattery(Battery *bat, int selected, int lvl) {
   if (lvl == 1) {
     strcpy(bat->next, "Basic Energy Storage");
-    bat->upgradePrice = 5.0;
+    bat->upgradePrice = 1.0;
   } else if (lvl == 2) {
     strcpy(bat->next, "Mid-Tier Energy Storage");
     bat->upgradePrice = 100000.0;
