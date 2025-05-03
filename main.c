@@ -1,8 +1,15 @@
+/*
+  I am not a proffecional coder. This Project is more likely to learn C language and raylib documentation.
+  It's just a try to develop new thinking and get some experience in non-dynamic code language as C is unlike C# (I hate it).
+  So if anyone have any suggestions, message me, I'm open to new ideas that could make me smarter. Thanks
+*/
+
 #include "raylib.h"
 #include <stdio.h>
 #include <string.h>
 
 /*
+  This code is not optimised, but I'm trying to.
   Trying to make save files as small as possible.
 */
 
