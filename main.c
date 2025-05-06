@@ -9,6 +9,7 @@ typedef struct {
 } GameData;
 
 int main(void) {
+
   // Setting up Window
   const float screenWidth = 1280.0f;
   const float screenHeight = 720.0f;
@@ -17,6 +18,7 @@ int main(void) {
 
   InitWindow(screenWidth, screenHeight, windowTitle);
   SetTargetFPS(targetFps);
+  // SetConfigFlags(FLAG_WINDOW_UNDECORATED);
   // SetExitKey(KEY_NULL);
 
   // Day/Night Variables
@@ -26,7 +28,7 @@ int main(void) {
   bool isDay = true;
 
   // Setting Screens
-  typedef enum { SCREEN_MAIN } GameScreen;
+  typedef enum { SCREEN_MAIN, SCREEN_UPGRADES } GameScreen;
   GameScreen currentScreen = SCREEN_MAIN;
 
   // Timer Variables
@@ -82,6 +84,7 @@ int main(void) {
         dayTimer = 0.0f;
       }
     }
+#pragma endregion
 
 #pragma region Upper Panel
     DrawRectangle(0, 0, screenWidth, PanelHeight, bg2);
@@ -119,11 +122,32 @@ int main(void) {
              screenWidth / 5 * 2 - screenWidth / 5 / 2 -
                  MeasureText("Upgrades", HeaderFont) / 2,
              PanelHeight / 2 - HeaderFont / 2, HeaderFont, HeaderColor);
+
+    if (isClicked && currentScreen != SCREEN_UPGRADES) {
+      currentScreen = SCREEN_UPGRADES;
+    }
+#pragma endregion
+
 #pragma region Lower Panel
+#pragma endregion
 
 #pragma region SCREEN_MAIN
-    if (currentScreen = SCREEN_MAIN) {
+    if (currentScreen == SCREEN_MAIN) {
+      // Editing Upper Panel
+      DrawLine(screenWidth / 5 / 2 - MeasureText("Game", HeaderFont),
+               PanelHeight * 0.9,
+               screenWidth / 5 / 2 + MeasureText("Game", HeaderFont),
+               PanelHeight * 0.9, LinesColor);
+
+      // Dividing screen
+      DrawLine(screenWidth / 3, PanelHeight + PanelHeight * 0.1,
+               screenWidth / 3, screenHeight - PanelHeight - PanelHeight * 0.2,
+               LinesColor);
+      DrawLine(screenWidth / 3 * 2, PanelHeight + PanelHeight * 0.1,
+               screenWidth / 3 * 2,
+               screenHeight - PanelHeight - PanelHeight * 0.2, LinesColor);
     }
+#pragma endregion
 
     EndDrawing();
   }
