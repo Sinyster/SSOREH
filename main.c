@@ -1,18 +1,45 @@
 #include "raylib.h"
 #include <stdio.h>
+#include <string.h>
 
 typedef struct {
-  double money;
-  float sunlight;
+  double Money;
+
+  int UnlockedLevelBattery;
+  int UnlockedLevelGenerator;
+  // int UnlockedLevelStuff;
+  int UnlockedStageBattery;
+  int UnlockedStageGenerator;
+  // int UnlockedStageStuff;
 } GameData;
 
 typedef struct {
-  char name[64];
+  // Namings
+  char Name[64];
+  char Next[64];
+
+  // Variables
+  double Capacity;
+  double Charge;
+  double ChargeInPercent;
+  double Price;
+  double NextPrice;
+  double MaxInput;
 } Battery;
 
 typedef struct {
-  char name[64];
+  // Namings
+  char Name[64];
+  char Next[64];
+
+  // Variables
+  double GeneratesPerClick;
+  double GeneratesPerSecond;
+  double Efficiency;
 } Generator;
+
+void setBattery(Battery *bat, int unlockedLvl, int stage);
+void setGenerator(Generator *gen, int unlockedLvl, int stage);
 
 int main(void) {
 
@@ -43,6 +70,7 @@ int main(void) {
   } GameScreen;
   GameScreen currentScreen = SCREEN_MAIN;
 
+  // Defaults
   GameData data = {0};
   Battery bat = {0};
   Generator gen = {0};
@@ -57,7 +85,7 @@ int main(void) {
   Color HoverOver = GRAY;
 
   Color HeaderColor = DARKGRAY;
-  Color TextColor = LIGHTGRAY;
+  Color TextColor = GRAY;
 
   // Panel Variables
   const float PanelHeight = 40.0f;
@@ -77,6 +105,10 @@ int main(void) {
     ClearBackground(bg1);
 
     Vector2 mousePoint = GetMousePosition();
+
+    setBattery(&bat, data.UnlockedLevelBattery, data.UnlockedStageBattery);
+    setGenerator(&gen, data.UnlockedLevelGenerator,
+                 data.UnlockedStageGenerator);
 
 #pragma region Upper Panel
     DrawRectangle(0, 0, screenWidth, PanelHeight, bg2);
@@ -190,10 +222,10 @@ int main(void) {
              screenHeight - PanelHeight + PanelHeight * 0.9, LinesColor);
 
     // Drawing Money
-    char moneyText[30];
-    snprintf(moneyText, sizeof(moneyText), "$ %0.1f", data.money);
-    DrawText(moneyText,
-             screenWidth / 2 - MeasureText(moneyText, HeaderFont) / 2,
+    char MoneyText[30];
+    snprintf(MoneyText, sizeof(MoneyText), "$ %0.1f", data.Money);
+    DrawText(MoneyText,
+             screenWidth / 2 - MeasureText(MoneyText, HeaderFont) / 2,
              screenHeight - PanelHeight + PanelHeight / 2 - HeaderFont / 2,
              HeaderFont, HeaderColor);
 #pragma endregion
@@ -212,6 +244,40 @@ int main(void) {
       DrawLine(screenWidth / 3 * 2, PanelHeight + PanelHeight * 0.1,
                screenWidth / 3 * 2,
                screenHeight - PanelHeight - PanelHeight * 0.2, LinesColor);
+
+      // RENDERING
+      // Battery
+      DrawText(bat.Name, 10, PanelHeight * 2, textFont, HeaderColor);
+      DrawLine(10, PanelHeight * 2 + textFont,
+               10 + MeasureText(bat.Name, textFont), PanelHeight * 2 + textFont,
+               HeaderColor);
+
+      // MAX Capacity
+      char CapacityText[30];
+      snprintf(CapacityText, sizeof(CapacityText), "Max. Capacity: %0.1f Wh",
+               bat.Capacity);
+      DrawText(CapacityText, 10, PanelHeight * 3, textFont, TextColor);
+
+      // MAX Input Per Second
+      char MaxPSText[30];
+      snprintf(MaxPSText, sizeof(MaxPSText), "Max. Input: %0.1f/s",
+               bat.MaxInput);
+      DrawText(MaxPSText, 10, PanelHeight * 3 + HeaderFont, textFont,
+               TextColor);
+
+      // Actual Charge
+      char ChargeText[30];
+      snprintf(ChargeText, sizeof(ChargeText), "Charge: %0.1f", bat.Charge);
+      DrawText(ChargeText, 10, PanelHeight * 3 + HeaderFont * 2, textFont,
+               TextColor);
+
+      // Charge in %
+      bat.ChargeInPercent = 100.0f * (bat.Charge / bat.Capacity);
+      char ChargeInPercentText[30];
+      snprintf(ChargeInPercentText, sizeof(ChargeInPercentText),
+               "Charge in %: %0.1f", bat.ChargeInPercent);
+      DrawText(ChargeInPercentText, 10, PanelHeight * 3 + HeaderFont * 3,
+               textFont, TextColor);
 
 #pragma region Sunlight
       if (isDay) {
@@ -286,4 +352,32 @@ int main(void) {
   }
   CloseWindow();
   return 0;
+}
+
+// Setting Batteries
+void setBattery(Battery *bat, int unlockedLvl, int stage) {
+  switch (stage) {
+  case 0:
+    if (unlockedLvl == 0) {
+      strcpy(bat->Name, "Lithium-Ion Battery");
+      bat->Capacity = 1000.0;
+      bat->MaxInput = 1.0;
+
+      // Next One
+      strcpy(bat->Next, "Basic Energy Upgrade");
+      bat->NextPrice = 5.0;
+    }
+    break;
+  }
+}
+
+// Setting Generators
+void setGenerator(Generator *gen, int unlockedLvl, int stage) {
+  switch (stage) {
+  case 0:
+    if (unlockedLvl == 0) {
+      strcpy(gen->Name, "Hand Crank");
+    }
+    break;
+  }
 }
