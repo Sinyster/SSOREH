@@ -38,8 +38,19 @@ typedef struct {
   double Efficiency;
 } Generator;
 
+typedef struct {
+  // Namings
+  char Name[64];
+  char Next[64];
+
+  // Variables
+  double DrainSecond;
+  double GeneratesSecond;
+} Stuff;
+
 void setBattery(Battery *bat, int unlockedLvl, int stage);
 void setGenerator(Generator *gen, int unlockedLvl, int stage);
+void setStuff(Stuff *stuff, int unlockedLvl, int stage);
 
 int main(void) {
 
@@ -228,6 +239,15 @@ int main(void) {
              screenWidth / 2 - MeasureText(MoneyText, HeaderFont) / 2,
              screenHeight - PanelHeight + PanelHeight / 2 - HeaderFont / 2,
              HeaderFont, HeaderColor);
+
+    // Drawing Charge of Battery in %
+    char ChargeInPercentText[30];
+    snprintf(ChargeInPercentText, sizeof(ChargeInPercentText),
+             "Battery %: %0.1f", bat.ChargeInPercent);
+    DrawText(
+        ChargeInPercentText,
+        screenWidth / 5 / 2 - MeasureText(ChargeInPercentText, textFont) / 2,
+        screenHeight - PanelHeight / 2 - textFont / 2, textFont, HeaderColor);
 #pragma endregion
 
 #pragma region SCREEN_MAIN
@@ -273,11 +293,48 @@ int main(void) {
 
       // Charge in %
       bat.ChargeInPercent = 100.0f * (bat.Charge / bat.Capacity);
-      char ChargeInPercentText[30];
       snprintf(ChargeInPercentText, sizeof(ChargeInPercentText),
                "Charge in %: %0.1f", bat.ChargeInPercent);
       DrawText(ChargeInPercentText, 10, PanelHeight * 3 + HeaderFont * 3,
                textFont, TextColor);
+
+      // Generator
+
+      // Generations
+      // HandCrank
+      if (data.UnlockedLevelGenerator == 0) {
+        Rectangle click = {screenWidth / 3 + 5, PanelHeight + 5,
+                           screenWidth / 3 - 10,
+                           screenHeight - PanelHeight * 2 - 10};
+        isHovering = CheckCollisionPointRec(mousePoint, click);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+        DrawRectangleRec(click, isHovering ? LIGHTGRAY : bg1);
+
+        if (isClicked) {
+          if (bat.Charge > bat.Capacity) {
+            bat.Charge = bat.Capacity;
+          } else {
+            bat.Charge += gen.GeneratesPerClick;
+          }
+        }
+
+        DrawText(gen.Name, screenWidth / 3 + 10, PanelHeight * 2, textFont,
+                 HeaderColor);
+        DrawLine(screenWidth / 3 + 10, PanelHeight * 2 + textFont,
+                 screenWidth / 3 + 10 + MeasureText(gen.Name, textFont),
+                 PanelHeight * 2 + textFont, HeaderColor);
+        char WhPerClickText[30];
+        snprintf(WhPerClickText, sizeof(WhPerClickText), "Wh per Click: %0.1f",
+                 gen.GeneratesPerClick);
+        DrawText(WhPerClickText, screenWidth / 3 + 10, PanelHeight * 3,
+                 textFont, TextColor);
+
+        DrawText("Click Anywhere!",
+                 screenWidth / 2 -
+                     MeasureText("Click Anywhere!", HeaderFont) / 2,
+                 screenHeight - PanelHeight * 2, HeaderFont,
+                 isHovering ? GRAY : LIGHTGRAY);
+      }
 
 #pragma region Sunlight
       if (isDay) {
@@ -377,7 +434,10 @@ void setGenerator(Generator *gen, int unlockedLvl, int stage) {
   case 0:
     if (unlockedLvl == 0) {
       strcpy(gen->Name, "Hand Crank");
+      gen->GeneratesPerClick = 0.5;
     }
     break;
   }
 }
+
+void setStuff(Stuff *stuff, int unlockedLvl, int stage) {}
