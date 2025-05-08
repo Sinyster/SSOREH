@@ -6,11 +6,13 @@ typedef struct {
   double Money;
 
   int UnlockedLevelBattery;
-  int UnlockedLevelGenerator;
-  // int UnlockedLevelStuff;
   int UnlockedStageBattery;
+
+  int UnlockedLevelGenerator;
   int UnlockedStageGenerator;
-  // int UnlockedStageStuff;
+
+  int UnlockedLevelStuff;
+  int UnlockedStageStuff;
 } GameData;
 
 typedef struct {
@@ -66,8 +68,8 @@ int main(void) {
   // SetExitKey(KEY_NULL);
 
   // Day/Night Variables
-  const int dayMinutes = 10;
-  const int nightMinutes = 5;
+  const int dayMinutes = 900;
+  const int nightMinutes = 540;
   float sunlight = 0.0f;
   bool isDay = true;
 
@@ -85,6 +87,7 @@ int main(void) {
   GameData data = {0};
   Battery bat = {0};
   Generator gen = {0};
+  Stuff stuff = {0};
 
   // Timer Variables
   float dayTimer = 0.0f;
@@ -110,6 +113,7 @@ int main(void) {
   // Functional Variables
   bool isHovering = false;
   bool isClicked = false;
+  bool isGenerating = false;
 
   while (!WindowShouldClose()) {
     BeginDrawing();
@@ -117,9 +121,11 @@ int main(void) {
 
     Vector2 mousePoint = GetMousePosition();
 
+    // Setting Stuff?
     setBattery(&bat, data.UnlockedLevelBattery, data.UnlockedStageBattery);
     setGenerator(&gen, data.UnlockedLevelGenerator,
                  data.UnlockedStageGenerator);
+    setStuff(&stuff, data.UnlockedLevelStuff, data.UnlockedStageStuff);
 
 #pragma region Upper Panel
     DrawRectangle(0, 0, screenWidth, PanelHeight, bg2);
@@ -232,13 +238,22 @@ int main(void) {
              screenWidth / 5 * 4,
              screenHeight - PanelHeight + PanelHeight * 0.9, LinesColor);
 
+    // Drawing Sunlight
+    char SunlightText[30];
+    snprintf(SunlightText, sizeof(SunlightText), "Sunlight %: %0.2f", sunlight);
+    DrawText(SunlightText,
+             screenWidth - screenWidth / 5 / 2 -
+                 MeasureText(SunlightText, textFont) / 2,
+             screenHeight - PanelHeight / 2 - textFont / 2, textFont,
+             HeaderColor);
+
     // Drawing Money
     char MoneyText[30];
     snprintf(MoneyText, sizeof(MoneyText), "$ %0.1f", data.Money);
     DrawText(MoneyText,
-             screenWidth / 2 - MeasureText(MoneyText, HeaderFont) / 2,
-             screenHeight - PanelHeight + PanelHeight / 2 - HeaderFont / 2,
-             HeaderFont, HeaderColor);
+             screenWidth / 2 - MeasureText(MoneyText, textFont) / 2,
+             screenHeight - PanelHeight + PanelHeight / 2 - textFont / 2,
+             textFont+4, HeaderColor);
 
     // Drawing Charge of Battery in %
     char ChargeInPercentText[30];
@@ -294,11 +309,21 @@ int main(void) {
       // Charge in %
       bat.ChargeInPercent = 100.0f * (bat.Charge / bat.Capacity);
       snprintf(ChargeInPercentText, sizeof(ChargeInPercentText),
-               "Charge in %: %0.1f", bat.ChargeInPercent);
+               "Charge in %: %0.2f", bat.ChargeInPercent);
       DrawText(ChargeInPercentText, 10, PanelHeight * 3 + HeaderFont * 3,
                textFont, TextColor);
+      /*
 
-      // Generator
+
+
+
+
+
+
+
+
+
+      */
 
       // Generations
       // HandCrank
@@ -336,6 +361,44 @@ int main(void) {
                  isHovering ? GRAY : LIGHTGRAY);
       }
 
+      /*
+
+
+
+
+
+
+
+
+
+
+      */
+
+      // Machines
+      // Name
+      DrawText(stuff.Name, screenWidth / 3 * 2 + 10, PanelHeight * 2, textFont,
+               HeaderColor);
+      DrawLine(screenWidth / 3 * 2 + 10, PanelHeight * 2 + textFont,
+               screenWidth / 3 * 2 + 10 + MeasureText(stuff.Name, textFont),
+               PanelHeight * 2 + textFont, HeaderColor);
+      // Drain
+      char DrainText[30];
+      snprintf(DrainText, sizeof(DrainText), "Drains: %0.2f Wh/s",
+               stuff.DrainSecond);
+      DrawText(DrainText, screenWidth / 3 * 2 + 10, PanelHeight * 3, textFont,
+               TextColor);
+
+      // Money Per Drain
+      char GensPerSec[30];
+      snprintf(GensPerSec, sizeof(GensPerSec), "Generates: %0.2f $/s",
+               stuff.GeneratesSecond);
+      DrawText(GensPerSec, screenWidth / 3 * 2 + 10, PanelHeight * 4, textFont,
+               TextColor);
+      /*
+
+
+
+      */
 #pragma region Sunlight
       if (isDay) {
         dayTimer += GetFrameTime();
@@ -440,4 +503,14 @@ void setGenerator(Generator *gen, int unlockedLvl, int stage) {
   }
 }
 
-void setStuff(Stuff *stuff, int unlockedLvl, int stage) {}
+void setStuff(Stuff *stuff, int unlockedLvl, int stage) {
+  switch (stage) {
+  case 0:
+    if (unlockedLvl == 0) {
+      strcpy(stuff->Name, "Old Light Bulb");
+      stuff->DrainSecond = 0.2;
+      stuff->GeneratesSecond = 0.1;
+    }
+    break;
+  }
+}
