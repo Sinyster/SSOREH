@@ -4,6 +4,7 @@
 
 typedef struct {
   double Money;
+  double Sunlight;
 
   int UnlockedLevelBattery;
   int UnlockedStageBattery;
@@ -126,6 +127,8 @@ int main(void) {
     setGenerator(&gen, data.UnlockedLevelGenerator,
                  data.UnlockedStageGenerator);
     setStuff(&stuff, data.UnlockedLevelStuff, data.UnlockedStageStuff);
+
+    data.Sunlight = sunlight;
 
 #pragma region Upper Panel
     DrawRectangle(0, 0, screenWidth, PanelHeight, bg2);
@@ -250,10 +253,9 @@ int main(void) {
     // Drawing Money
     char MoneyText[30];
     snprintf(MoneyText, sizeof(MoneyText), "$ %0.1f", data.Money);
-    DrawText(MoneyText,
-             screenWidth / 2 - MeasureText(MoneyText, textFont) / 2,
+    DrawText(MoneyText, screenWidth / 2 - MeasureText(MoneyText, textFont) / 2,
              screenHeight - PanelHeight + PanelHeight / 2 - textFont / 2,
-             textFont+4, HeaderColor);
+             textFont + 4, HeaderColor);
 
     // Drawing Charge of Battery in %
     char ChargeInPercentText[30];
@@ -375,6 +377,40 @@ int main(void) {
       */
 
       // Machines
+      // Turn ON/OFF
+      Rectangle OnOffButton = {screenWidth / 3 * 2 + 5, PanelHeight + 5,
+                               screenWidth / 3 - 10,
+                               screenHeight - PanelHeight * 2 - 10};
+      isHovering = CheckCollisionPointRec(mousePoint, OnOffButton);
+      isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+      DrawRectangleRec(OnOffButton, isHovering ? LIGHTGRAY : bg1);
+
+      if (isClicked) {
+        isGenerating = isGenerating ? false : true;
+      }
+      if (bat.Charge < 0) {
+        isGenerating = false;
+        bat.Charge = 0;
+      }
+      if (isGenerating && bat.Charge > 0) {
+        DrawText("Turn Off",
+                 screenWidth / 3 * 2 + screenWidth / 3 / 2 -
+                     MeasureText("Turn Off", HeaderFont) / 2,
+                 screenHeight - PanelHeight * 2, HeaderFont,
+                 isHovering ? GRAY : LIGHTGRAY);
+
+        // Function
+        data.Money += stuff.GeneratesSecond / targetFps;
+        bat.Charge -= stuff.DrainSecond / targetFps;
+
+      } else {
+        DrawText("Turn On",
+                 screenWidth / 3 * 2 + screenWidth / 3 / 2 -
+                     MeasureText("Turn On", HeaderFont) / 2,
+                 screenHeight - PanelHeight * 2, HeaderFont,
+                 isHovering ? GRAY : LIGHTGRAY);
+      }
+
       // Name
       DrawText(stuff.Name, screenWidth / 3 * 2 + 10, PanelHeight * 2, textFont,
                HeaderColor);
@@ -394,11 +430,12 @@ int main(void) {
                stuff.GeneratesSecond);
       DrawText(GensPerSec, screenWidth / 3 * 2 + 10, PanelHeight * 4, textFont,
                TextColor);
+
       /*
 
 
 
-      */
+*/
 #pragma region Sunlight
       if (isDay) {
         dayTimer += GetFrameTime();
