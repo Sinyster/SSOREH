@@ -1,6 +1,8 @@
 #ifndef VAR_H
 #define VAR_H
 
+#include "raylib.h"
+
 typedef enum {
   SCREEN_PLAY,
   SCREEN_UPGRADE,
@@ -10,7 +12,6 @@ typedef enum {
 } GameScreen;
 
 // Window Variables
-#include "raylib.h"
 const float ScreenWidth = 1280.0f;
 const float ScreenHeight = 720.0f;
 const int TargetFps = 60;
@@ -32,5 +33,14 @@ const float FontSizeText = 26.0f;
 const char UpperPanelTitles[][24] = {"GAME", "UPGRADES", "STATISTICS",
                                      "SETTINGS", "MENU"};
 int NumOfUPT = sizeof(UpperPanelTitles) / sizeof(UpperPanelTitles[0]);
+
+// Pop-Up Variables
+const float PopUpWidth = 0.0f;
+const float PopUpHeight = 0.0f;
+
+// Function Variables
+bool isGameButtonAlowed = false;
+bool isHovering = false;
+bool isClicked = false;
 
 #endif
