@@ -34,13 +34,15 @@ const char UpperPanelTitles[][24] = {"GAME", "UPGRADES", "STATISTICS",
                                      "SETTINGS", "MENU"};
 int NumOfUPT = sizeof(UpperPanelTitles) / sizeof(UpperPanelTitles[0]);
 
-// Pop-Up Variables
-const float PopUpWidth = 0.0f;
-const float PopUpHeight = 0.0f;
+// PopUp Labels
+// PopUp Labels: Upgrades
+const char UpgradePopupTitles[][24] = {"Batteries", "Generators", "Machines"};
+int NumOfUPUT = sizeof(UpgradePopupTitles) / sizeof(UpgradePopupTitles[0]);
 
 // Function Variables
 bool isGameButtonAlowed = false;
 bool isHovering = false;
 bool isClicked = false;
+bool isUpgPopUpShowed = false;
 
 #endif

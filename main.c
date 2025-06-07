@@ -6,10 +6,14 @@
 // Functions: Render
 void RenderUpperPanel(Color bg);
 void RenderLowerPanel(Color bg);
+void RenderPopUp(Color bg, Rectangle Button);
 
 // Functions: Texts
 void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
                            Color Inactive);
+
+// Functions: Enable
+void EnableGameButton(Vector2 VectorPointer, GameScreen *CurrentScreen);
 int main(void) {
   // Setting Default Values
   GameScreen CurrentScreen = SCREEN_PLAY;
@@ -25,16 +29,32 @@ int main(void) {
 
     // Upper Panel
     RenderUpperPanel(PanelBackground);
-    RenderUpperPanelTexts(CurrentScreen, BLACK, GRAY);
 
     // Lower Panel
     RenderLowerPanel(PanelBackground);
 
     // Functionality of Game Button
+    EnableGameButton(MousePoint, &CurrentScreen);
 
     // Functionality of Upgrade Button
     Rectangle BtnUpgrade = {ScreenWidth / NumOfUPT, 0, ScreenWidth / NumOfUPT,
                             PanelHeight};
+    isHovering = CheckCollisionPointRec(MousePoint, BtnUpgrade);
+    isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+    DrawRectangleRec(BtnUpgrade, isHovering ? GRAY : PanelBackground);
+    if (isClicked && !isUpgPopUpShowed) {
+      isUpgPopUpShowed = true;
+    } else if (isClicked && isUpgPopUpShowed) {
+      isUpgPopUpShowed = false;
+    }
+
+    // Render Upgrade Popup
+    if (isUpgPopUpShowed) {
+      RenderPopUp(PanelBackground, BtnUpgrade);
+    }
+
+    // Upper Panel: Texts (Here cause of layering objects)
+    RenderUpperPanelTexts(CurrentScreen, BLACK, DARKGRAY);
 
     EndDrawing();
   }
@@ -76,7 +96,24 @@ void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
   return;
 }
 
-void RenderPopUpUpgrades(Color bg) {}
+// Function for rendering Popup
+void RenderPopUp(Color bg, Rectangle Button) {
+  if (isUpgPopUpShowed) {
+    Rectangle popup = {Button.x, Button.y + PanelHeight, Button.width,
+                       PanelHeight * NumOfUPUT};
+    DrawRectangleRec(popup, bg);
+    char buffer[128];
+    for (int i = 0; i < NumOfUPUT; i++) {
+      snprintf(buffer, sizeof(buffer), "%s", UpgradePopupTitles[i]);
+
+      float x = Button.x + Spacing;
+      float y = (Button.y + PanelHeight) * (i + 1) + Spacing;
+
+      DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+    }
+  }
+  return;
+}
 
 // Function for Game Button
 void EnableGameButton(Vector2 VectorPointer, GameScreen *CurrentScreen) {
@@ -90,4 +127,5 @@ void EnableGameButton(Vector2 VectorPointer, GameScreen *CurrentScreen) {
       CurrentScreen = SCREEN_PLAY;
     }
   }
+  return;
 }
