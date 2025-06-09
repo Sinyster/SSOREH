@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "variables.h"
 #include <stdio.h>
+#include <string.h>
 
 // Functions
 // Functions: Render
@@ -8,6 +9,7 @@ void RenderUpperPanel(Color bg);
 void RenderLowerPanel(Color bg);
 void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint);
 void RenderBatteryPlayScreen();
+void RenderGeneratorPlayScreen(Vector2 MousePoint);
 
 // Functions: Render: Division
 void DivideIntoThree();
@@ -21,9 +23,11 @@ void EnableGameButton(Vector2 VectorPointer);
 
 // Functions: Calculations
 void CalculateBatteryPercentage();
+void CalculateSunlight();
 
 // Define stuff
-void defineBatteries(Battery *bat);
+void DefineBatteries(Battery *bat);
+void DefineGenerators(Generator *gen);
 
 int main(void) {
   // Base Vars - Windows
@@ -38,15 +42,14 @@ int main(void) {
 
     // Game Calculations
     CalculateBatteryPercentage();
+    CalculateSunlight();
 
     // Define Batteries
-    defineBatteries(&bat);
+    DefineBatteries(&bat);
+    DefineGenerators(&gen);
 
     // Upper Panel
     RenderUpperPanel(PanelBackground);
-
-    // Lower Panel
-    RenderLowerPanel(PanelBackground);
 
     // Functionality of Game Button
     EnableGameButton(MousePoint);
@@ -65,13 +68,34 @@ int main(void) {
 
     switch (CurrentScreen) {
     case SCREEN_PLAY:
-      // Layer 1: Division
-      DivideIntoThree();
+
+      // Layer 1: Lower Panel
+      RenderLowerPanel(PanelBackground);
 
       // Layer 2: Texts
       RenderBatteryPlayScreen();
+      Rectangle GenBtn = {ScreenWidth / 3, PanelHeight + Spacing,
+                          ScreenWidth / 3 - 4,
+                          ScreenHeight - PanelHeight * 2 - Spacing * 2};
+      isHovering = CheckCollisionPointRec(MousePoint, GenBtn);
+      isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+      DrawRectangleRec(GenBtn, isHovering ? LIGHTGRAY : BackgroundWhite);
+
+      if (isClicked) {
+        if (Data.ActiveGenerator == 0) {
+          bat.actualCapacity += gen.genPerClick;
+        } else {
+          isGenerating = !isGenerating;
+        }
+      }
+      RenderGeneratorPlayScreen(MousePoint);
+
+      // Layer 4: Division
+      DivideIntoThree();
       break;
     case SCREEN_UPGRADE:
+      // Layer 1: Lower Panel
+      RenderLowerPanel(PanelBackground);
       break;
     case SCREEN_STATS:
       break;
@@ -113,7 +137,34 @@ void RenderUpperPanel(Color bg) {
 
 // Function for Rendering Background of Lower panel
 void RenderLowerPanel(Color bg) {
+  // Draw Background as Layer 1
   DrawRectangle(0, ScreenHeight - PanelHeight, ScreenWidth, PanelHeight, bg);
+
+  char buffer[128];
+  float x = 0.0f;
+  float y = ScreenHeight - PanelHeight / 2 - FontSizeHeader / 2;
+
+  // Text as Layer 2
+  // Render Money
+  snprintf(buffer, sizeof(buffer), "%0.2f$", Data.money);
+  x = ScreenWidth / 2.0 - (float)MeasureText(buffer, FontSizeText) / 2;
+  DrawText(buffer, x, y, FontSizeHeader, BLACK);
+
+  // Battery Capacity in %
+  snprintf(buffer, sizeof(buffer), "Battery %: %0.2f", bat.percentage);
+  x = (ScreenWidth / 5 / 2) - (float)MeasureText(buffer, FontSizeText) / 2;
+  y = ScreenHeight - PanelHeight / 2 - FontSizeText / 2;
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+
+  // Sunlight in %
+  snprintf(buffer, sizeof(buffer), "Sunlight %: %0.2f", Data.sunlight);
+  x = ScreenWidth - (ScreenWidth / NumOfUPT / 2) -
+      (float)MeasureText(buffer, FontSizeText) / 2;
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+
+  // Electricity Input
+
+  // Electricity Output
   return;
 }
 
@@ -193,35 +244,53 @@ void RenderBatteryPlayScreen() {
   // Buffer Variable for formatting other vars
   char buffer[128];
 
-  float x = 0.0f;
-  float y = 0.0f;
-  float fontSize = FontSizeText - 3;
+  float x = Spacing;
+  float y = PanelHeight * 2;
 
   Color color = DARKGRAY;
 
   // Drawing Main Label + UnderLine
-  x = Spacing;
-  y = PanelHeight * 2;
 
   snprintf(buffer, sizeof(buffer), "Battery: %s", bat.name);
-  DrawText(buffer, x, y, fontSize, BLACK);
+  DrawText(buffer, x, y, FontSizeText, BLACK);
 
   // Actual Capacity
-  y += fontSize;
+  y += FontSizeText;
 
   snprintf(buffer, sizeof(buffer), "Capacity: %0.2f Wh", bat.actualCapacity);
-  DrawText(buffer, x, y, fontSize, color);
+  DrawText(buffer, x, y, FontSizeText, color);
 
   // Capacity in %
-  y += fontSize;
-  snprintf(buffer, sizeof(buffer), "Capacity %: %0.0f", bat.percentage);
-  DrawText(buffer, x, y, fontSize, color);
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Capacity %: %0.2f", bat.percentage);
+  DrawText(buffer, x, y, FontSizeText, color);
 
   // Max Capacity
-  y += fontSize;
+  y += FontSizeText;
 
   snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.maxCapacity);
-  DrawText(buffer, x, y, fontSize, color);
+  DrawText(buffer, x, y, FontSizeText, color);
+  return;
+}
+
+void RenderGeneratorPlayScreen(Vector2 MousePoint) {
+  char buffer[128];
+
+  if (Data.ActiveGenerator == 0) {
+    snprintf(buffer, sizeof(buffer), "Click Anywhere!");
+    DrawText(buffer,
+             ScreenWidth / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2,
+             ScreenHeight - PanelHeight * 3, FontSizeHeader, DARKGRAY);
+  }
+
+  float x = ScreenWidth / 3 + Spacing;
+  float y = PanelHeight * 2;
+
+  // Generator Name
+  snprintf(buffer, sizeof(buffer), "Generator: %s", gen.name);
+  DrawText(buffer, x, y, FontSizeText, BLACK);
+
+  return;
 }
 
 // TEXTS
@@ -264,28 +333,65 @@ void EnableGameButton(Vector2 VectorPointer) {
   return;
 }
 
+// Simple Function for calculating Battery Capacity in %
 void CalculateBatteryPercentage() {
   bat.percentage = 100.0f * (bat.actualCapacity / bat.maxCapacity);
   return;
 }
 
-// Define Stuff
-void defineBatteries(Battery *bat) {
-  int battery = 0;
-  battery = activeBattery;
-  for (int i = 0; i < 2; i++) {
-    switch (battery) {
-    case 0:
-      // Base Battery
-      strcpy(bat->name, "Lithium Battery");
-      bat->maxCapacity = 1000.0; // Wh
-      bat->maxInput = 0.5;       // Wh
-      bat->maxOutput = 0.5;      // Wh
-      break;
-    case 1:
-      break;
+// sunlight Function
+void CalculateSunlight() {
+  Data.DayTimer += GetFrameTime();
+  if (isDay) {
+    if (Data.DayTimer < (float)DayMinutes / 2) {
+      Data.sunlight += 100.0f / ((float)DayMinutes / 2 * TargetFps);
+      if (Data.sunlight > 100.0f) {
+        Data.sunlight = 100.0f;
+      }
+    } else if (Data.DayTimer > (float)DayMinutes / 2) {
+      Data.sunlight -= 100.0f / ((float)DayMinutes / 2 * TargetFps);
+      if (Data.sunlight < 0.1f) {
+        Data.sunlight = 0.0f;
+        Data.DayTimer = 0.0f;
+        isDay = false;
+      }
     }
-    battery += 1;
+  } else {
+    Data.DayTimer += GetFrameTime();
+    if (Data.DayTimer > (float)NightMinutes) {
+      isDay = true;
+      Data.DayTimer = 0.0f;
+    }
+  }
+  return;
+}
+
+// Define Stuff
+// Define Batteries
+void DefineBatteries(Battery *bat) {
+  int battery = Data.ActiveBattery;
+  switch (battery) {
+  case 0:
+    // Base Battery
+    strcpy(bat->name, "Lithium Battery");
+    bat->maxCapacity = 1000.0; // Wh
+    bat->maxInput = 0.5;       // Wh
+    bat->maxOutput = 0.5;      // Wh
+    break;
+  case 1:
+    break;
+  }
+  return;
+}
+
+// Define Generators
+void DefineGenerators(Generator *gen) {
+  int generator = Data.ActiveGenerator;
+  switch (generator) {
+  case 0:
+    strcpy(gen->name, "Handcrank");
+    gen->genPerClick = 0.1f; // Wh
+    break;
   }
   return;
 }
