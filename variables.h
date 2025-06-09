@@ -11,11 +11,17 @@ typedef enum {
   SCREEN_MENU
 } GameScreen;
 
+typedef enum { UPG_BAT, UPG_GEN, UPG_MAC } UpgradeScreen;
+
 // Window Variables
 const float ScreenWidth = 1280.0f;
 const float ScreenHeight = 720.0f;
 const int TargetFps = 60;
 const char Title[8] = "SS-OREH";
+
+// Setting Default Values
+GameScreen CurrentScreen = SCREEN_PLAY;
+UpgradeScreen UpgScreen = UPG_BAT;
 
 // Panel Variables
 const float PanelHeight = 40.0f;
