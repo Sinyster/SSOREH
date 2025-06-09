@@ -9,7 +9,8 @@ void RenderUpperPanel(Color bg);
 void RenderLowerPanel(Color bg);
 void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint);
 void RenderBatteryPlayScreen();
-void RenderGeneratorPlayScreen(Vector2 MousePoint);
+void RenderGeneratorPlayScreen();
+void RenderMachinePlayScreen();
 
 // Functions: Render: Division
 void DivideIntoThree();
@@ -24,10 +25,12 @@ void EnableGameButton(Vector2 VectorPointer);
 // Functions: Calculations
 void CalculateBatteryPercentage();
 void CalculateSunlight();
+void GeneratingMoney();
 
 // Define stuff
 void DefineBatteries(Battery *bat);
 void DefineGenerators(Generator *gen);
+void DefineMachines(Machines *mac);
 
 int main(void) {
   // Base Vars - Windows
@@ -47,6 +50,7 @@ int main(void) {
     // Define Batteries
     DefineBatteries(&bat);
     DefineGenerators(&gen);
+    DefineMachines(&mac);
 
     // Upper Panel
     RenderUpperPanel(PanelBackground);
@@ -68,13 +72,6 @@ int main(void) {
 
     switch (CurrentScreen) {
     case SCREEN_PLAY:
-
-      // Layer 1: Lower Panel
-      RenderLowerPanel(PanelBackground);
-
-      // Layer 2: Texts
-      RenderBatteryPlayScreen();
-
       // Function for Generating
       Rectangle GenBtn = {ScreenWidth / 3, PanelHeight + Spacing,
                           ScreenWidth / 3 - 4,
@@ -114,7 +111,17 @@ int main(void) {
           isGenerating = !isGenerating;
         }
       }
-      RenderGeneratorPlayScreen(MousePoint);
+      if (isGenerating) {
+        GeneratingMoney();
+      }
+
+      // Layer 1: Lower Panel
+      RenderLowerPanel(PanelBackground);
+
+      // Layer 2: Texts
+      RenderBatteryPlayScreen();
+      RenderGeneratorPlayScreen();
+      RenderMachinePlayScreen();
 
       // Layer 4: Division
       DivideIntoThree();
@@ -302,7 +309,8 @@ void RenderBatteryPlayScreen() {
   return;
 }
 
-void RenderGeneratorPlayScreen(Vector2 MousePoint) {
+// Function for rendering generator info on screen
+void RenderGeneratorPlayScreen() {
   char buffer[128];
 
   if (Data.ActiveGenerator == 0) {
@@ -317,6 +325,20 @@ void RenderGeneratorPlayScreen(Vector2 MousePoint) {
 
   // Generator Name
   snprintf(buffer, sizeof(buffer), "Generator: %s", gen.name);
+  DrawText(buffer, x, y, FontSizeText, BLACK);
+
+  return;
+}
+
+// Function for rendering machine info on screen
+void RenderMachinePlayScreen() {
+  char buffer[128];
+
+  float x = (ScreenWidth - ScreenWidth / 3) + Spacing;
+  float y = PanelHeight * 2;
+
+  // Main Label
+  snprintf(buffer, sizeof(buffer), "Machine: %s", mac.name);
   DrawText(buffer, x, y, FontSizeText, BLACK);
 
   return;
@@ -395,6 +417,15 @@ void CalculateSunlight() {
   return;
 }
 
+void GeneratingMoney() {
+  if (bat.actualCapacity == 0.0f) {
+    isGenerating = false;
+    return;
+  }
+
+  return;
+}
+
 // Define Stuff
 // Define Batteries
 void DefineBatteries(Battery *bat) {
@@ -423,4 +454,15 @@ void DefineGenerators(Generator *gen) {
     break;
   }
   return;
+}
+
+// Define Machines
+void DefineMachines(Machines *mac) {
+  int machine = Data.ActiveMachine;
+  switch (machine) {
+  case 0:
+    strcpy(mac->name, "Smoke Detector");
+    mac->drain = 1.0;
+    mac->output = mac->drain * 1.1;
+  }
 }

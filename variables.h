@@ -9,6 +9,7 @@ typedef struct {
   double money;
   int ActiveBattery;
   int ActiveGenerator;
+  int ActiveMachine;
 
   // Sunlight
   float sunlight;
@@ -48,13 +49,17 @@ typedef struct {
   double genPerClick;
 } Generator;
 
-// Machines
+typedef struct {
+  char name[16];
+  double drain;
+  double output;
+} Machines;
 
 typedef struct {
   GameData data;
   Battery battery;
   Generator generator;
-  // Machines machines;
+  Machines machines;
 } SaveData;
 
 // Window Variables
@@ -70,6 +75,7 @@ UpgradeScreen UpgScreen = UPG_BAT;
 GameData Data = {0};
 Battery bat = {0};
 Generator gen = {0};
+Machines mac = {0};
 
 // Panel Variables
 const float PanelHeight = 40.0f;
@@ -114,5 +120,8 @@ const int NightMinutes = 480.0f;
 // Game Variables: Input
 float InputTimer = 0.0f;
 float InputUsedThisSecond = 0.0f;
+
+// Game Variables: Selling
+float ActualOutput = 0.0f;
 
 #endif
