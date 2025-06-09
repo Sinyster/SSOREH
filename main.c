@@ -667,7 +667,7 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
   DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
 
   // Next
-  snprintf(buffer, sizeof(buffer), "Next: ");
+  snprintf(buffer, sizeof(buffer), "Next:");
   x = rec1.x + Spacing;
   y = rec1.y + Spacing;
   DrawText(buffer, x, y, FontSizeText, LightFontInactive);
@@ -690,6 +690,33 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
   DrawText(buffer, x, y, FontSizeText, LightFontInactive);
 
   // Now Using
+  y = rec1.y + rec1.height / 2;
+  snprintf(buffer, sizeof(buffer), "Now Using:");
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+  DrawLine(x, y + FontSizeText, rec1.x + rec1.width - Spacing, y + FontSizeText,
+           LightFontInactive);
+
+  // Now Using: Name
+  y += FontSizeHeader;
+  snprintf(buffer, sizeof(buffer), "Battery %s", bat.name);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+  // Now Using: Battery Max Capacity
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.maxCapacity);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+  // Now Using: Max Input
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Max Input: %0.2f", bat.maxInput);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+  // Price for first segment
+  x = rec1.x + rec1.width / 2;
+  y = rec1.y + rec1.height - PanelHeight * 2;
+  snprintf(buffer, sizeof(buffer), "Price: %0.2f$", bat.price);
+  DrawText(buffer, x - (float)MeasureText(buffer, FontSizeText) / 2, y,
+           FontSizeText, LightFontActive);
 
   // Second Segment: Header Text
   snprintf(buffer, sizeof(buffer), "Medium Voltage");
@@ -697,11 +724,29 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
   y = rec2.y - PanelHeight;
   DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
 
+  // Locks if not unlocked
+  if (Data.voltageBat < 1) {
+    x = rec2.x + rec2.width / 2;
+    y = rec2.y + rec2.height / 2 - FontSizeHeader / 2;
+    snprintf(buffer, sizeof(buffer), "Locked");
+    DrawText(buffer, x - (float)MeasureText(buffer, FontSizeHeader) / 2, y,
+             FontSizeHeader, LightFontInactive);
+  }
+
   // Third Segment: Header Text
   snprintf(buffer, sizeof(buffer), "High Voltage");
   x = rec3.x + rec3.width / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2;
   y = rec3.y - PanelHeight;
   DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
+
+  // Locks if not unlocked
+  if (Data.voltageBat < 2) {
+    x = rec3.x + rec3.width / 2;
+    y = rec3.y + rec3.height / 2 - FontSizeHeader / 2;
+    snprintf(buffer, sizeof(buffer), "Locked");
+    DrawText(buffer, x - (float)MeasureText(buffer, FontSizeHeader) / 2, y,
+             FontSizeHeader, LightFontInactive);
+  }
 
   return;
 }

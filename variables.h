@@ -97,7 +97,7 @@ Machines mac = {0};
 const float PanelHeight = 40.0f;
 const float Spacing = 10.0f;
 
-// Color Palettes
+// Color Palletes
 // Light Mode
 Color BackgroundLight = WHITE;
 Color PanelBackgroundLight = LIGHTGRAY;
