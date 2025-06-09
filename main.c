@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "variables.h"
 #include <stdio.h>
+#include <string.h>
 
 // Functions
 // Functions: Render
@@ -33,7 +34,7 @@ void DefineGenerators(Generator *gen);
 void DefineMachines(Machines *mac);
 
 int main(void) {
-  Font font = GetFontDefault();
+  Font defaultFont = GetFontDefault();
 
   // Base Vars - Windows
   InitWindow(ScreenWidth, ScreenHeight, Title);
@@ -383,7 +384,6 @@ void RenderMachinePlayScreen() {
   y += FontSizeText;
   snprintf(buffer, sizeof(buffer), "Sells for: %0.2f$", mac.output);
   DrawText(buffer, x, y, FontSizeText, DARKGRAY);
-
   return;
 }
 
@@ -487,29 +487,48 @@ void GeneratingMoney() {
 // Define Stuff
 // Define Batteries
 void DefineBatteries(Battery *bat) {
-  int battery = Data.ActiveBattery;
-  switch (battery) {
-  case 0:
-    // Base Battery
-    strcpy(bat->name, "Lithium Battery");
-    bat->maxCapacity = 1000.0; // Wh
-    bat->maxInput = 0.5;       // Wh
-    break;
-  case 1:
-    break;
-  }
+  // Variables for Defining batteries and easier choosement
+  char Names[][32] = {
+      "Lithium-Ion",
+      "Lead-Acid",
+      "Supercharged Lithium-Ion",
+  };
+
+  double Capacities[] = {1000.0, 1500.0, 5000.0};
+  double Inputs[] = {0.5, 3.0, 5.0};
+
+  // Formatting and Defining as itself
+  strcpy(bat->name, Names[Data.ActiveBattery]);
+  bat->maxCapacity = Capacities[Data.ActiveBattery];
+  bat->maxInput = Inputs[Data.ActiveBattery];
+
+  strcpy(bat->NextName, Names[Data.ActiveBattery + 1]);
+  bat->NextMaxCap = Capacities[Data.ActiveBattery + 1];
+  bat->NextMaxInput = Inputs[Data.ActiveBattery + 1];
   return;
 }
 
 // Define Generators
 void DefineGenerators(Generator *gen) {
-  int generator = Data.ActiveGenerator;
-  switch (generator) {
-  case 0:
-    strcpy(gen->name, "Handcrank");
-    gen->genPerClick = 0.1f; // W
-    break;
+  // Variables for Defining generators and easier choosement
+  char Names[][32] = {"HandCrank", "Solar Panel"};
+
+  double Generates[] = {0.1, 1.5};
+
+  char Specials[][32] = {"", "Needs Sun light"};
+
+  // Formatting and Defining as itself
+  strcpy(gen->name, Names[Data.ActiveGenerator]);
+  strcpy(gen->Special, Specials[Data.ActiveGenerator]);
+  if (Data.ActiveGenerator == 0) {
+    gen->genPerClick = Generates[Data.ActiveGenerator];
+  } else {
+    gen->genPerSec = Generates[Data.ActiveGenerator];
   }
+
+  strcpy(gen->NextName, Names[Data.ActiveGenerator + 1]);
+  strcpy(gen->NextSpecial, Specials[Data.ActiveGenerator + 1]);
+  gen->NextGen = Generates[Data.ActiveGenerator + 1];
   return;
 }
 
@@ -521,5 +540,6 @@ void DefineMachines(Machines *mac) {
     strcpy(mac->name, "Smoke Detector");
     mac->drain = 1.0;
     mac->output = mac->drain * 1.1;
+    break;
   }
 }

@@ -30,26 +30,39 @@ typedef enum { UPG_BAT, UPG_GEN, UPG_MAC } UpgradeScreen;
 
 // Struct for Batteries
 typedef struct {
-  char name[16];
+  char name[32];
   double maxCapacity;
   double actualCapacity;
   double maxInput;
   double price;
 
+  char NextName[32];
+  double NextMaxCap;
+  double NextMaxInput;
+
   float percentage;
 } Battery;
 
 typedef struct {
-  char name[16];
+  char name[32];
   double genPerSec;
-
   double genPerClick;
+  char Special[32];
+
+  char NextName[32];
+  double NextGen;
+  char NextSpecial[32];
+
 } Generator;
 
 typedef struct {
-  char name[16];
+  char name[32];
   double drain;
   double output;
+
+  char NextName[32];
+  double NextDrain;
+  double NextOutput;
 } Machines;
 
 typedef struct {
