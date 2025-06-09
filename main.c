@@ -74,6 +74,8 @@ int main(void) {
 
       // Layer 2: Texts
       RenderBatteryPlayScreen();
+
+      // Function for Generating
       Rectangle GenBtn = {ScreenWidth / 3, PanelHeight + Spacing,
                           ScreenWidth / 3 - 4,
                           ScreenHeight - PanelHeight * 2 - Spacing * 2};
@@ -81,9 +83,33 @@ int main(void) {
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
       DrawRectangleRec(GenBtn, isHovering ? LIGHTGRAY : BackgroundWhite);
 
+      InputTimer += GetFrameTime();
+      if (InputTimer >= 1.0f) {
+        InputUsedThisSecond = 0.0f;
+        InputTimer = 0.0f;
+        input = 0.0f;
+      }
+
       if (isClicked) {
         if (Data.ActiveGenerator == 0) {
-          bat.actualCapacity += gen.genPerClick;
+          float toAdd = gen.genPerClick;
+
+          if (InputUsedThisSecond + toAdd <= bat.maxInput) {
+            bat.actualCapacity += toAdd;
+            InputUsedThisSecond += toAdd;
+          } else {
+            float remaining = bat.maxInput - InputUsedThisSecond;
+            if (remaining > 0.0f) {
+              bat.actualCapacity += remaining;
+              InputUsedThisSecond += remaining;
+            }
+          }
+          input = InputUsedThisSecond;
+
+          if (bat.actualCapacity >= bat.maxCapacity) {
+            bat.actualCapacity = bat.maxCapacity;
+          }
+
         } else {
           isGenerating = !isGenerating;
         }
@@ -163,6 +189,10 @@ void RenderLowerPanel(Color bg) {
   DrawText(buffer, x, y, FontSizeText, DARKGRAY);
 
   // Electricity Input
+  snprintf(buffer, sizeof(buffer), "Input: %0.2f", input);
+  x = ScreenWidth / NumOfUPT + (ScreenWidth / NumOfUPT / 2) -
+      (float)MeasureText(buffer, FontSizeText) / 2;
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
 
   // Electricity Output
   return;
@@ -250,7 +280,6 @@ void RenderBatteryPlayScreen() {
   Color color = DARKGRAY;
 
   // Drawing Main Label + UnderLine
-
   snprintf(buffer, sizeof(buffer), "Battery: %s", bat.name);
   DrawText(buffer, x, y, FontSizeText, BLACK);
 

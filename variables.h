@@ -104,8 +104,15 @@ bool isDay = true;
 
 bool isGenerating = false;
 
+// Game Variables
+float input = 0.0f;
+
 // Game Variables: Sunlight
 const int DayMinutes = 960.0f;
 const int NightMinutes = 480.0f;
+
+// Game Variables: Input
+float InputTimer = 0.0f;
+float InputUsedThisSecond = 0.0f;
 
 #endif
