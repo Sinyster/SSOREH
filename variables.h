@@ -11,6 +11,10 @@ typedef struct {
   int ActiveGenerator;
   int ActiveMachine;
 
+  int voltageBat;
+  int voltageGen;
+  int voltageMac;
+
   // Sunlight
   float sunlight;
   float DayTimer;

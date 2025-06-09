@@ -15,6 +15,11 @@ void RenderMachinePlayScreen();
 // Functions: Render: Division
 void DivideIntoThree();
 
+// Functions: Render Upgrade Screens
+void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2, Rectangle rec3);
+// Generator
+// Machines
+
 // Functions: Texts
 void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
                            Color Inactive);
@@ -28,7 +33,7 @@ void CalculateSunlight();
 void GeneratingElectricity();
 void GeneratingMoney();
 
-// Define stuff
+// Functions: Define stuff
 void DefineBatteries(Battery *bat);
 void DefineGenerators(Generator *gen);
 void DefineMachines(Machines *mac);
@@ -135,6 +140,9 @@ int main(void) {
 
       if (isSelling) {
         GeneratingMoney();
+        ActualOutput = mac.drain;
+      } else {
+        ActualOutput = 0.0f;
       }
 
       // Layer 1: Lower Panel
@@ -151,6 +159,52 @@ int main(void) {
     case SCREEN_UPGRADE:
       // Layer 1: Lower Panel
       RenderLowerPanel(PanelBackground);
+
+      switch (UpgScreen) {
+      case UPG_BAT:
+        // Functionality
+        Rectangle LowVoltageUnlock = {
+            Spacing, PanelHeight * 3 + Spacing, ScreenWidth / 3 - Spacing * 2,
+            ScreenHeight - PanelHeight * 4 - Spacing * 2};
+
+        isHovering = CheckCollisionPointRec(MousePoint, LowVoltageUnlock);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        DrawRectangleRec(LowVoltageUnlock,
+                         isHovering ? LIGHTGRAY : BackgroundWhite);
+
+        // if(isClicked){}
+
+        Rectangle MediumVoltageUnlock = {
+            ScreenWidth / 3 + Spacing, PanelHeight * 3 + Spacing,
+            ScreenWidth / 3 - Spacing * 2,
+            ScreenHeight - PanelHeight * 4 - Spacing * 2};
+
+        isHovering = CheckCollisionPointRec(MousePoint, MediumVoltageUnlock);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        DrawRectangleRec(MediumVoltageUnlock,
+                         isHovering ? LIGHTGRAY : BackgroundWhite);
+
+        // if(isClicked){}
+
+        Rectangle HighVoltageUnlock = {
+            ScreenWidth - ScreenWidth / 3, PanelHeight * 3,
+            ScreenWidth / 3 - Spacing * 2,
+            ScreenHeight - PanelHeight * 4 - Spacing * 2};
+
+        isHovering = CheckCollisionPointRec(MousePoint, HighVoltageUnlock);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        DrawRectangleRec(HighVoltageUnlock,
+                         isHovering ? LIGHTGRAY : BackgroundWhite);
+
+        // Layer 1: Texts
+        RenderBatteryUpgradeScreen(LowVoltageUnlock, MediumVoltageUnlock,
+                                   HighVoltageUnlock);
+        break;
+      case UPG_GEN:
+        break;
+      case UPG_MAC:
+        break;
+      }
       break;
     case SCREEN_STATS:
       break;
@@ -224,9 +278,14 @@ void RenderLowerPanel(Color bg) {
   DrawText(buffer, x, y, FontSizeText, DARKGRAY);
 
   // Electricity Output
+  snprintf(buffer, sizeof(buffer), "Output: %0.2f", ActualOutput);
+  x = ScreenWidth - (ScreenWidth / NumOfUPT) - (ScreenWidth / NumOfUPT / 2) -
+      (float)MeasureText(buffer, FontSizeText) / 2;
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
   return;
 }
 
+#pragma region Render
 // Function for rendering Popup
 void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
   if (isUpgPopUpShowed) {
@@ -242,8 +301,8 @@ void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
     DrawRectangleRec(Batteries, isHovering ? GRAY : PanelBackground);
 
     if (isClicked) {
-      UpgScreen = UPG_BAT;
       CurrentScreen = SCREEN_UPGRADE;
+      UpgScreen = UPG_BAT;
       isGameButtonAlowed = true;
       isUpgPopUpShowed = false;
     }
@@ -255,8 +314,8 @@ void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
     DrawRectangleRec(Generators, isHovering ? GRAY : PanelBackground);
 
     if (isClicked) {
-      UpgScreen = UPG_GEN;
       CurrentScreen = SCREEN_UPGRADE;
+      UpgScreen = UPG_GEN;
       isGameButtonAlowed = true;
       isUpgPopUpShowed = false;
     }
@@ -268,8 +327,8 @@ void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
     DrawRectangleRec(Machines, isHovering ? GRAY : PanelBackground);
 
     if (isClicked) {
-      UpgScreen = UPG_MAC;
       CurrentScreen = SCREEN_UPGRADE;
+      UpgScreen = UPG_MAC;
       isGameButtonAlowed = true;
       isUpgPopUpShowed = false;
     }
@@ -393,7 +452,7 @@ void RenderMachinePlayScreen() {
   return;
 }
 
-// TEXTS
+#pragma region TEXTS
 // Function for Rendering Upper Panel Button Texts - Even Active one
 void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
                            Color Inactive) {
@@ -416,7 +475,7 @@ void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
   return;
 }
 
-// OTHER
+#pragma region OTHER
 // Function for Game Button
 void EnableGameButton(Vector2 VectorPointer) {
   if (isGameButtonAlowed) {
@@ -490,74 +549,128 @@ void GeneratingMoney() {
   return;
 }
 
-// Define Stuff
+#pragma region Define Stuff
 // Define Batteries
 void DefineBatteries(Battery *bat) {
-  // Variables for Defining batteries and easier choosement
-  char Names[][32] = {
-      "Lithium-Ion",
-      "Lead-Acid",
-      "Supercharged Lithium-Ion",
-  };
+  // Variables for Defining batteries and easier choosement (Low Voltage)
+  if (Data.voltageBat == 0) {
+    char Names[][32] = {
+        "Lithium-Ion",
+        "Lead-Acid",
+    };
 
-  double Capacities[] = {1000.0, 1500.0, 5000.0};
-  double Inputs[] = {0.5, 3.0, 5.0};
-  double Prices[] = {0.0, 500.0};
+    double Capacities[] = {1000.0, 1500.0};
+    double Inputs[] = {0.5, 3.0};
+    double Prices[] = {0.0, 500.0};
 
-  // Formatting and Defining as itself
-  strcpy(bat->name, Names[Data.ActiveBattery]);
-  bat->maxCapacity = Capacities[Data.ActiveBattery];
-  bat->maxInput = Inputs[Data.ActiveBattery];
+    // Formatting and Defining as itself
+    strcpy(bat->name, Names[Data.ActiveBattery]);
+    bat->maxCapacity = Capacities[Data.ActiveBattery];
+    bat->maxInput = Inputs[Data.ActiveBattery];
 
-  strcpy(bat->NextName, Names[Data.ActiveBattery + 1]);
-  bat->NextMaxCap = Capacities[Data.ActiveBattery + 1];
-  bat->NextMaxInput = Inputs[Data.ActiveBattery + 1];
-  bat->price = Prices[Data.ActiveBattery + 1];
+    strcpy(bat->NextName, Names[Data.ActiveBattery + 1]);
+    bat->NextMaxCap = Capacities[Data.ActiveBattery + 1];
+    bat->NextMaxInput = Inputs[Data.ActiveBattery + 1];
+    bat->price = Prices[Data.ActiveBattery + 1];
+  } else if (Data.voltageBat == 1) {
+    //
+  } else if (Data.voltageBat == 2) {
+    //
+  }
   return;
 }
 
 // Define Generators
 void DefineGenerators(Generator *gen) {
-  // Variables for Defining generators and easier choosement
-  char Names[][32] = {"HandCrank", "Solar Panel"};
-  char Specials[][32] = {"Is Manual", "Needs Sun light"};
+  if (Data.voltageGen == 0) {
+    // Variables for Defining generators and easier choosement
+    char Names[][32] = {"HandCrank", "Solar Panel"};
+    char Specials[][32] = {"Is Manual", "Needs Sun light"};
 
-  double Generates[] = {0.1, 1.5};
-  double Prices[] = {0.0, 500.0};
+    double Generates[] = {0.1, 1.5};
+    double Prices[] = {0.0, 500.0};
 
-  // Formatting and Defining as itself
-  strcpy(gen->name, Names[Data.ActiveGenerator]);
-  strcpy(gen->Special, Specials[Data.ActiveGenerator]);
-  if (Data.ActiveGenerator == 0) {
-    gen->genPerClick = Generates[Data.ActiveGenerator];
-  } else {
-    gen->genPerSec = Generates[Data.ActiveGenerator];
+    // Formatting and Defining as itself
+    strcpy(gen->name, Names[Data.ActiveGenerator]);
+    strcpy(gen->Special, Specials[Data.ActiveGenerator]);
+    if (Data.ActiveGenerator == 0) {
+      gen->genPerClick = Generates[Data.ActiveGenerator];
+    } else {
+      gen->genPerSec = Generates[Data.ActiveGenerator];
+    }
+
+    strcpy(gen->NextName, Names[Data.ActiveGenerator + 1]);
+    strcpy(gen->NextSpecial, Specials[Data.ActiveGenerator + 1]);
+    gen->NextGen = Generates[Data.ActiveGenerator + 1];
+    gen->price = Prices[Data.ActiveGenerator + 1];
+  } else if (Data.voltageGen == 1) {
+    //
+  } else if (Data.voltageGen == 2) {
+    //
   }
-
-  strcpy(gen->NextName, Names[Data.ActiveGenerator + 1]);
-  strcpy(gen->NextSpecial, Specials[Data.ActiveGenerator + 1]);
-  gen->NextGen = Generates[Data.ActiveGenerator + 1];
-  gen->price = Prices[Data.ActiveGenerator + 1];
   return;
 }
 
 // Define Machines
 void DefineMachines(Machines *mac) {
-  // Variables for Defining machines and easier choosement
-  char Names[][32] = {"Smoke Detector", "LED LightBulb"};
+  if (Data.voltageMac == 0) {
+    // Variables for Defining machines and easier choosement
+    char Names[][32] = {"Smoke Detector", "LED LightBulb"};
 
-  double Drainage[] = {1.0, 3.0};
-  double RevenueMultiplier[] = {1.1, 1.15};
-  double Prices[] = {0.0, 500.0};
+    double Drainage[] = {1.0, 3.0};
+    double RevenueMultiplier[] = {1.1, 1.15};
+    double Prices[] = {0.0, 500.0};
 
-  // Formatting and Defining as itself
-  strcpy(mac->name, Names[Data.ActiveMachine]);
-  mac->drain = Drainage[Data.ActiveMachine];
-  mac->output = mac->drain * RevenueMultiplier[Data.ActiveMachine];
+    // Formatting and Defining as itself
+    strcpy(mac->name, Names[Data.ActiveMachine]);
+    mac->drain = Drainage[Data.ActiveMachine];
+    mac->output = mac->drain * RevenueMultiplier[Data.ActiveMachine];
 
-  strcpy(mac->NextName, Names[Data.ActiveMachine + 1]);
-  mac->NextDrain = Drainage[Data.ActiveMachine + 1];
-  mac->NextOutput = mac->NextDrain * RevenueMultiplier[Data.ActiveMachine + 1];
-  mac->price = Prices[Data.ActiveMachine + 1];
+    strcpy(mac->NextName, Names[Data.ActiveMachine + 1]);
+    mac->NextDrain = Drainage[Data.ActiveMachine + 1];
+    mac->NextOutput =
+        mac->NextDrain * RevenueMultiplier[Data.ActiveMachine + 1];
+    mac->price = Prices[Data.ActiveMachine + 1];
+  } else if (Data.voltageMac == 1) {
+    //
+  } else if (Data.voltageMac == 2) {
+    //
+  }
+  return;
+}
+
+#pragma region UPG Render
+// Function for Rendering Battery Upgrade Screen
+void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
+                                Rectangle rec3) {
+  char buffer[128];
+  float x = 0.0f;
+  float y = 0.0f;
+
+  // First Segment: Header Text
+  snprintf(buffer, sizeof(buffer), "Low Voltage");
+  x = rec1.x + rec1.width / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2;
+  y = rec1.y - PanelHeight;
+  DrawText(buffer, x, y, FontSizeHeader, DARKGRAY);
+
+  // Next
+  snprintf(buffer, sizeof(buffer), "Next: ");
+  x = rec1.x + Spacing;
+  y = rec1.y + Spacing;
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  // Now Using
+
+  // Second Segment: Header Text
+  snprintf(buffer, sizeof(buffer), "Medium Voltage");
+  x = rec2.x + rec2.width / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2;
+  y = rec2.y - PanelHeight;
+  DrawText(buffer, x, y, FontSizeHeader, DARKGRAY);
+
+  // Third Segment: Header Text
+  snprintf(buffer, sizeof(buffer), "High Voltage");
+  x = rec3.x + rec3.width / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2;
+  y = rec3.y - PanelHeight;
+  DrawText(buffer, x, y, FontSizeHeader, DARKGRAY);
+
   return;
 }
