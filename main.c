@@ -47,7 +47,7 @@ int main(void) {
 
   while (!WindowShouldClose()) {
     BeginDrawing();
-    ClearBackground(BackgroundWhite);
+    ClearBackground(BackgroundLight);
 
     Vector2 MousePoint = GetMousePosition();
 
@@ -61,7 +61,7 @@ int main(void) {
     DefineMachines(&mac);
 
     // Upper Panel
-    RenderUpperPanel(PanelBackground);
+    RenderUpperPanel(PanelBackgroundLight);
 
     // Functionality of Game Button
     EnableGameButton(MousePoint);
@@ -71,7 +71,8 @@ int main(void) {
                             PanelHeight};
     isHovering = CheckCollisionPointRec(MousePoint, BtnUpgrade);
     isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-    DrawRectangleRec(BtnUpgrade, isHovering ? GRAY : PanelBackground);
+    DrawRectangleRec(BtnUpgrade,
+                     isHovering ? HoverLight : PanelBackgroundLight);
     if (isClicked && !isUpgPopUpShowed) {
       isUpgPopUpShowed = true;
     } else if (isClicked && isUpgPopUpShowed) {
@@ -86,7 +87,8 @@ int main(void) {
                           ScreenHeight - PanelHeight * 2 - Spacing * 2};
       isHovering = CheckCollisionPointRec(MousePoint, GenBtn);
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-      DrawRectangleRec(GenBtn, isHovering ? LIGHTGRAY : BackgroundWhite);
+      DrawRectangleRec(GenBtn,
+                       isHovering ? PanelBackgroundLight : BackgroundLight);
 
       InputTimer += GetFrameTime();
       if (InputTimer >= 1.0f) {
@@ -130,23 +132,33 @@ int main(void) {
                            ScreenHeight - PanelHeight * 2 - Spacing * 2};
       isHovering = CheckCollisionPointRec(MousePoint, SellBtn);
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-      DrawRectangleRec(SellBtn, isHovering ? LIGHTGRAY : BackgroundWhite);
+      DrawRectangleRec(SellBtn,
+                       isHovering ? PanelBackgroundLight : BackgroundLight);
 
-      if (isClicked && !isSelling) {
+      if (isClicked && !isSelling && bat.actualCapacity > 0.0) {
         isSelling = true;
       } else if (isClicked && isSelling) {
         isSelling = false;
       }
-
       if (isSelling) {
         GeneratingMoney();
         ActualOutput = mac.drain;
+        DrawText("Turn Off",
+                 SellBtn.x + SellBtn.width / 2 -
+                     (float)MeasureText("Turn Off", FontSizeHeader) / 2,
+                 ScreenHeight - PanelHeight * 3, FontSizeHeader,
+                 LightFontInactive);
       } else {
         ActualOutput = 0.0f;
+        DrawText("Turn On",
+                 SellBtn.x + SellBtn.width / 2 -
+                     (float)MeasureText("Turn On", FontSizeHeader) / 2,
+                 ScreenHeight - PanelHeight * 3, FontSizeHeader,
+                 LightFontInactive);
       }
 
       // Layer 1: Lower Panel
-      RenderLowerPanel(PanelBackground);
+      RenderLowerPanel(PanelBackgroundLight);
 
       // Layer 2: Texts
       RenderBatteryPlayScreen();
@@ -158,7 +170,7 @@ int main(void) {
       break;
     case SCREEN_UPGRADE:
       // Layer 1: Lower Panel
-      RenderLowerPanel(PanelBackground);
+      RenderLowerPanel(PanelBackgroundLight);
 
       switch (UpgScreen) {
       case UPG_BAT:
@@ -170,7 +182,7 @@ int main(void) {
         isHovering = CheckCollisionPointRec(MousePoint, LowVoltageUnlock);
         isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
         DrawRectangleRec(LowVoltageUnlock,
-                         isHovering ? LIGHTGRAY : BackgroundWhite);
+                         isHovering ? PanelBackgroundLight : BackgroundLight);
 
         // if(isClicked){}
 
@@ -182,7 +194,7 @@ int main(void) {
         isHovering = CheckCollisionPointRec(MousePoint, MediumVoltageUnlock);
         isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
         DrawRectangleRec(MediumVoltageUnlock,
-                         isHovering ? LIGHTGRAY : BackgroundWhite);
+                         isHovering ? PanelBackgroundLight : BackgroundLight);
 
         // if(isClicked){}
 
@@ -194,7 +206,7 @@ int main(void) {
         isHovering = CheckCollisionPointRec(MousePoint, HighVoltageUnlock);
         isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
         DrawRectangleRec(HighVoltageUnlock,
-                         isHovering ? LIGHTGRAY : BackgroundWhite);
+                         isHovering ? PanelBackgroundLight : BackgroundLight);
 
         // Layer 1: Texts
         RenderBatteryUpgradeScreen(LowVoltageUnlock, MediumVoltageUnlock,
@@ -219,7 +231,7 @@ int main(void) {
     // It's down here cause of render layering
     // Render Upgrade Popup
     if (isUpgPopUpShowed) {
-      RenderPopUp(PanelBackground, BtnUpgrade, MousePoint);
+      RenderPopUp(PanelBackgroundLight, BtnUpgrade, MousePoint);
     }
 
     // If clicked anywhere else then PopUp, close.
@@ -229,7 +241,7 @@ int main(void) {
     }
 
     // Upper Panel: Texts (Here cause of layering objects)
-    RenderUpperPanelTexts(CurrentScreen, BLACK, DARKGRAY);
+    RenderUpperPanelTexts(CurrentScreen, LightFontActive, LightFontInactive);
 
     EndDrawing();
   }
@@ -257,31 +269,31 @@ void RenderLowerPanel(Color bg) {
   // Render Money
   snprintf(buffer, sizeof(buffer), "%0.2f$", Data.money);
   x = ScreenWidth / 2.0 - (float)MeasureText(buffer, FontSizeText) / 2;
-  DrawText(buffer, x, y, FontSizeHeader, BLACK);
+  DrawText(buffer, x, y, FontSizeHeader, LightFontActive);
 
   // Battery Capacity in %
   snprintf(buffer, sizeof(buffer), "Battery %: %0.2f", bat.percentage);
   x = (ScreenWidth / 5 / 2) - (float)MeasureText(buffer, FontSizeText) / 2;
   y = ScreenHeight - PanelHeight / 2 - FontSizeText / 2;
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
 
   // Sunlight in %
   snprintf(buffer, sizeof(buffer), "Sunlight %: %0.2f", Data.sunlight);
   x = ScreenWidth - (ScreenWidth / NumOfUPT / 2) -
       (float)MeasureText(buffer, FontSizeText) / 2;
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
 
   // Electricity Input
   snprintf(buffer, sizeof(buffer), "Input: %0.2f", input);
   x = ScreenWidth / NumOfUPT + (ScreenWidth / NumOfUPT / 2) -
       (float)MeasureText(buffer, FontSizeText) / 2;
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
 
   // Electricity Output
   snprintf(buffer, sizeof(buffer), "Output: %0.2f", ActualOutput);
   x = ScreenWidth - (ScreenWidth / NumOfUPT) - (ScreenWidth / NumOfUPT / 2) -
       (float)MeasureText(buffer, FontSizeText) / 2;
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   return;
 }
 
@@ -298,7 +310,7 @@ void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
     Rectangle Batteries = {popup.x, popup.y, popup.width, PanelHeight};
     isHovering = CheckCollisionPointRec(MousePoint, Batteries);
     isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-    DrawRectangleRec(Batteries, isHovering ? GRAY : PanelBackground);
+    DrawRectangleRec(Batteries, isHovering ? HoverLight : PanelBackgroundLight);
 
     if (isClicked) {
       CurrentScreen = SCREEN_UPGRADE;
@@ -311,7 +323,8 @@ void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
                             PanelHeight};
     isHovering = CheckCollisionPointRec(MousePoint, Generators);
     isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-    DrawRectangleRec(Generators, isHovering ? GRAY : PanelBackground);
+    DrawRectangleRec(Generators,
+                     isHovering ? HoverLight : PanelBackgroundLight);
 
     if (isClicked) {
       CurrentScreen = SCREEN_UPGRADE;
@@ -324,7 +337,7 @@ void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
                           PanelHeight};
     isHovering = CheckCollisionPointRec(MousePoint, Machines);
     isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-    DrawRectangleRec(Machines, isHovering ? GRAY : PanelBackground);
+    DrawRectangleRec(Machines, isHovering ? HoverLight : PanelBackgroundLight);
 
     if (isClicked) {
       CurrentScreen = SCREEN_UPGRADE;
@@ -341,7 +354,7 @@ void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
       float x = Button.x + Spacing;
       float y = (Button.y + PanelHeight) * (i + 1) + Spacing;
 
-      DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+      DrawText(buffer, x, y, FontSizeText, LightFontInactive);
     }
   }
   return;
@@ -352,7 +365,7 @@ void DivideIntoThree() {
   for (int i = 0; i < 3; i++) {
     DrawLine(ScreenWidth / 3 * i - 1, PanelHeight + Spacing,
              ScreenWidth / 3 * i - 1, ScreenHeight - PanelHeight - Spacing,
-             BLACK);
+             LightFontActive);
   }
   return;
 }
@@ -365,11 +378,11 @@ void RenderBatteryPlayScreen() {
   float x = Spacing;
   float y = PanelHeight * 2;
 
-  Color color = DARKGRAY;
+  Color color = LightFontInactive;
 
   // Drawing Main Label + UnderLine
   snprintf(buffer, sizeof(buffer), "Battery: %s", bat.name);
-  DrawText(buffer, x, y, FontSizeText, BLACK);
+  DrawText(buffer, x, y, FontSizeText, LightFontActive);
 
   // Actual Capacity
   y += FontSizeText;
@@ -391,7 +404,7 @@ void RenderBatteryPlayScreen() {
   // Max Input
   y += FontSizeText;
   snprintf(buffer, sizeof(buffer), "Max Input: %0.2f W/s", bat.maxInput);
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   return;
 }
 
@@ -403,7 +416,7 @@ void RenderGeneratorPlayScreen() {
   float y = PanelHeight * 2;
   // Generator Name
   snprintf(buffer, sizeof(buffer), "Generator: %s", gen.name);
-  DrawText(buffer, x, y, FontSizeText, BLACK);
+  DrawText(buffer, x, y, FontSizeText, LightFontActive);
 
   // Generates
   y += FontSizeText;
@@ -411,21 +424,21 @@ void RenderGeneratorPlayScreen() {
     snprintf(buffer, sizeof(buffer), "Click Anywhere!");
     DrawText(buffer,
              ScreenWidth / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2,
-             ScreenHeight - PanelHeight * 3, FontSizeHeader, DARKGRAY);
+             ScreenHeight - PanelHeight * 3, FontSizeHeader, LightFontInactive);
 
     snprintf(buffer, sizeof(buffer), "Generates Per Click: %0.2f W",
              gen.genPerClick);
-    DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   } else {
     snprintf(buffer, sizeof(buffer), "Generates Per Sec: %0.2f W",
              gen.genPerSec);
-    DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   }
 
   // Specials
   y += FontSizeText;
   snprintf(buffer, sizeof(buffer), "Special: %s", gen.Special);
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   return;
 }
 
@@ -438,17 +451,17 @@ void RenderMachinePlayScreen() {
 
   // Main Label
   snprintf(buffer, sizeof(buffer), "Machine: %s", mac.name);
-  DrawText(buffer, x, y, FontSizeText, BLACK);
+  DrawText(buffer, x, y, FontSizeText, LightFontActive);
 
   // Drainage
   y += FontSizeText;
   snprintf(buffer, sizeof(buffer), "Drains: %0.2f W/s", mac.drain);
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
 
   // $ Per Drain
   y += FontSizeText;
   snprintf(buffer, sizeof(buffer), "Sells for: %0.2f$", mac.output);
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   return;
 }
 
@@ -482,7 +495,7 @@ void EnableGameButton(Vector2 VectorPointer) {
     Rectangle GameBtn = {0, 0, ScreenWidth / NumOfUPT, PanelHeight};
     isHovering = CheckCollisionPointRec(VectorPointer, GameBtn);
     isClicked = isHovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-    DrawRectangleRec(GameBtn, isHovering ? GRAY : PanelBackground);
+    DrawRectangleRec(GameBtn, isHovering ? HoverLight : PanelBackgroundLight);
 
     if (isClicked && CurrentScreen != SCREEN_PLAY) {
       isGameButtonAlowed = false;
@@ -651,26 +664,44 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
   snprintf(buffer, sizeof(buffer), "Low Voltage");
   x = rec1.x + rec1.width / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2;
   y = rec1.y - PanelHeight;
-  DrawText(buffer, x, y, FontSizeHeader, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
 
   // Next
   snprintf(buffer, sizeof(buffer), "Next: ");
   x = rec1.x + Spacing;
   y = rec1.y + Spacing;
-  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+  DrawLine(x, y + FontSizeText, rec1.x + rec1.width - Spacing, y + FontSizeText,
+           LightFontInactive);
+
+  // Next: Battery Name
+  y += FontSizeHeader;
+  snprintf(buffer, sizeof(buffer), "Battery: %s", bat.NextName);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+  // Next: Battery Max Capacity
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.NextMaxCap);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+  // Next: Max Input
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Max Input: %0.2f W/s", bat.NextMaxInput);
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
   // Now Using
 
   // Second Segment: Header Text
   snprintf(buffer, sizeof(buffer), "Medium Voltage");
   x = rec2.x + rec2.width / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2;
   y = rec2.y - PanelHeight;
-  DrawText(buffer, x, y, FontSizeHeader, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
 
   // Third Segment: Header Text
   snprintf(buffer, sizeof(buffer), "High Voltage");
   x = rec3.x + rec3.width / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2;
   y = rec3.y - PanelHeight;
-  DrawText(buffer, x, y, FontSizeHeader, DARKGRAY);
+  DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
 
   return;
 }

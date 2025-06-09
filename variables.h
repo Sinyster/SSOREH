@@ -97,9 +97,13 @@ Machines mac = {0};
 const float PanelHeight = 40.0f;
 const float Spacing = 10.0f;
 
-// Defining Colors
-Color BackgroundWhite = WHITE;
-Color PanelBackground = LIGHTGRAY;
+// Color Palettes
+// Light Mode
+Color BackgroundLight = WHITE;
+Color PanelBackgroundLight = LIGHTGRAY;
+Color LightFontInactive = DARKGRAY;
+Color LightFontActive = BLACK;
+Color HoverLight = GRAY;
 
 // Font Variables
 const float FontSizeHeader = 32.0f;
