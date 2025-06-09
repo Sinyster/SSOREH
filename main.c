@@ -1,7 +1,6 @@
 #include "raylib.h"
 #include "variables.h"
 #include <stdio.h>
-#include <string.h>
 
 // Functions
 // Functions: Render
@@ -25,6 +24,7 @@ void EnableGameButton(Vector2 VectorPointer);
 // Functions: Calculations
 void CalculateBatteryPercentage();
 void CalculateSunlight();
+void GeneratingElectricity();
 void GeneratingMoney();
 
 // Define stuff
@@ -33,6 +33,8 @@ void DefineGenerators(Generator *gen);
 void DefineMachines(Machines *mac);
 
 int main(void) {
+  Font font = GetFontDefault();
+
   // Base Vars - Windows
   InitWindow(ScreenWidth, ScreenHeight, Title);
   SetTargetFPS(TargetFps);
@@ -72,7 +74,7 @@ int main(void) {
 
     switch (CurrentScreen) {
     case SCREEN_PLAY:
-      // Function for Generating
+      // Generating Function
       Rectangle GenBtn = {ScreenWidth / 3, PanelHeight + Spacing,
                           ScreenWidth / 3 - 4,
                           ScreenHeight - PanelHeight * 2 - Spacing * 2};
@@ -111,7 +113,26 @@ int main(void) {
           isGenerating = !isGenerating;
         }
       }
+
       if (isGenerating) {
+        GeneratingElectricity();
+      }
+
+      // Selling Function
+      Rectangle SellBtn = {ScreenWidth / 3 * 2, PanelHeight + Spacing,
+                           ScreenWidth / 3,
+                           ScreenHeight - PanelHeight * 2 - Spacing * 2};
+      isHovering = CheckCollisionPointRec(MousePoint, SellBtn);
+      isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+      DrawRectangleRec(SellBtn, isHovering ? LIGHTGRAY : BackgroundWhite);
+
+      if (isClicked && !isSelling) {
+        isSelling = true;
+      } else if (isClicked && isSelling) {
+        isSelling = false;
+      }
+
+      if (isSelling) {
         GeneratingMoney();
       }
 
@@ -306,6 +327,11 @@ void RenderBatteryPlayScreen() {
 
   snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.maxCapacity);
   DrawText(buffer, x, y, FontSizeText, color);
+
+  // Max Input
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Max Input: %0.2f W/s", bat.maxInput);
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
   return;
 }
 
@@ -313,20 +339,27 @@ void RenderBatteryPlayScreen() {
 void RenderGeneratorPlayScreen() {
   char buffer[128];
 
+  float x = ScreenWidth / 3 + Spacing;
+  float y = PanelHeight * 2;
+  // Generator Name
+  snprintf(buffer, sizeof(buffer), "Generator: %s", gen.name);
+  DrawText(buffer, x, y, FontSizeText, BLACK);
+
+  y += FontSizeText;
   if (Data.ActiveGenerator == 0) {
     snprintf(buffer, sizeof(buffer), "Click Anywhere!");
     DrawText(buffer,
              ScreenWidth / 2 - (float)MeasureText(buffer, FontSizeHeader) / 2,
              ScreenHeight - PanelHeight * 3, FontSizeHeader, DARKGRAY);
+
+    snprintf(buffer, sizeof(buffer), "Generates Per Click: %0.2f W",
+             gen.genPerClick);
+    DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+  } else {
+    snprintf(buffer, sizeof(buffer), "Generates Per Sec: %0.2f W",
+             gen.genPerSec);
+    DrawText(buffer, x, y, FontSizeText, DARKGRAY);
   }
-
-  float x = ScreenWidth / 3 + Spacing;
-  float y = PanelHeight * 2;
-
-  // Generator Name
-  snprintf(buffer, sizeof(buffer), "Generator: %s", gen.name);
-  DrawText(buffer, x, y, FontSizeText, BLACK);
-
   return;
 }
 
@@ -340,6 +373,16 @@ void RenderMachinePlayScreen() {
   // Main Label
   snprintf(buffer, sizeof(buffer), "Machine: %s", mac.name);
   DrawText(buffer, x, y, FontSizeText, BLACK);
+
+  // Drainage
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Drains: %0.2f W/s", mac.drain);
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
+
+  // $ Per Drain
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Sells for: %0.2f$", mac.output);
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
 
   return;
 }
@@ -417,11 +460,26 @@ void CalculateSunlight() {
   return;
 }
 
-void GeneratingMoney() {
-  if (bat.actualCapacity == 0.0f) {
+void GeneratingElectricity() {
+  if (bat.actualCapacity >= bat.maxCapacity) {
     isGenerating = false;
+    bat.actualCapacity = bat.maxCapacity;
     return;
   }
+
+  bat.actualCapacity += gen.genPerSec / TargetFps;
+  return;
+}
+
+void GeneratingMoney() {
+  if (bat.actualCapacity <= 0.0f) {
+    isSelling = false;
+    bat.actualCapacity = 0.0f;
+    return;
+  }
+
+  bat.actualCapacity -= mac.drain / TargetFps;
+  Data.money += mac.output / TargetFps;
 
   return;
 }
@@ -436,7 +494,6 @@ void DefineBatteries(Battery *bat) {
     strcpy(bat->name, "Lithium Battery");
     bat->maxCapacity = 1000.0; // Wh
     bat->maxInput = 0.5;       // Wh
-    bat->maxOutput = 0.5;      // Wh
     break;
   case 1:
     break;
@@ -450,7 +507,7 @@ void DefineGenerators(Generator *gen) {
   switch (generator) {
   case 0:
     strcpy(gen->name, "Handcrank");
-    gen->genPerClick = 0.1f; // Wh
+    gen->genPerClick = 0.1f; // W
     break;
   }
   return;

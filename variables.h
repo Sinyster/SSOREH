@@ -33,7 +33,6 @@ typedef struct {
   char name[16];
   double maxCapacity;
   double actualCapacity;
-  double maxOutput;
   double maxInput;
   double price;
 
@@ -42,8 +41,6 @@ typedef struct {
 
 typedef struct {
   char name[16];
-  double maxGen;
-  double price;
   double genPerSec;
 
   double genPerClick;
@@ -109,6 +106,7 @@ bool isUpgPopUpShowed = false;
 bool isDay = true;
 
 bool isGenerating = false;
+bool isSelling = false;
 
 // Game Variables
 float input = 0.0f;
