@@ -346,6 +346,7 @@ void RenderGeneratorPlayScreen() {
   snprintf(buffer, sizeof(buffer), "Generator: %s", gen.name);
   DrawText(buffer, x, y, FontSizeText, BLACK);
 
+  // Generates
   y += FontSizeText;
   if (Data.ActiveGenerator == 0) {
     snprintf(buffer, sizeof(buffer), "Click Anywhere!");
@@ -361,6 +362,11 @@ void RenderGeneratorPlayScreen() {
              gen.genPerSec);
     DrawText(buffer, x, y, FontSizeText, DARKGRAY);
   }
+
+  // Specials
+  y += FontSizeText;
+  snprintf(buffer, sizeof(buffer), "Special: %s", gen.Special);
+  DrawText(buffer, x, y, FontSizeText, DARKGRAY);
   return;
 }
 
@@ -496,6 +502,7 @@ void DefineBatteries(Battery *bat) {
 
   double Capacities[] = {1000.0, 1500.0, 5000.0};
   double Inputs[] = {0.5, 3.0, 5.0};
+  double Prices[] = {0.0, 500.0};
 
   // Formatting and Defining as itself
   strcpy(bat->name, Names[Data.ActiveBattery]);
@@ -505,6 +512,7 @@ void DefineBatteries(Battery *bat) {
   strcpy(bat->NextName, Names[Data.ActiveBattery + 1]);
   bat->NextMaxCap = Capacities[Data.ActiveBattery + 1];
   bat->NextMaxInput = Inputs[Data.ActiveBattery + 1];
+  bat->price = Prices[Data.ActiveBattery + 1];
   return;
 }
 
@@ -512,10 +520,10 @@ void DefineBatteries(Battery *bat) {
 void DefineGenerators(Generator *gen) {
   // Variables for Defining generators and easier choosement
   char Names[][32] = {"HandCrank", "Solar Panel"};
+  char Specials[][32] = {"Is Manual", "Needs Sun light"};
 
   double Generates[] = {0.1, 1.5};
-
-  char Specials[][32] = {"", "Needs Sun light"};
+  double Prices[] = {0.0, 500.0};
 
   // Formatting and Defining as itself
   strcpy(gen->name, Names[Data.ActiveGenerator]);
@@ -529,17 +537,27 @@ void DefineGenerators(Generator *gen) {
   strcpy(gen->NextName, Names[Data.ActiveGenerator + 1]);
   strcpy(gen->NextSpecial, Specials[Data.ActiveGenerator + 1]);
   gen->NextGen = Generates[Data.ActiveGenerator + 1];
+  gen->price = Prices[Data.ActiveGenerator + 1];
   return;
 }
 
 // Define Machines
 void DefineMachines(Machines *mac) {
-  int machine = Data.ActiveMachine;
-  switch (machine) {
-  case 0:
-    strcpy(mac->name, "Smoke Detector");
-    mac->drain = 1.0;
-    mac->output = mac->drain * 1.1;
-    break;
-  }
+  // Variables for Defining machines and easier choosement
+  char Names[][32] = {"Smoke Detector", "LED LightBulb"};
+
+  double Drainage[] = {1.0, 3.0};
+  double RevenueMultiplier[] = {1.1, 1.15};
+  double Prices[] = {0.0, 500.0};
+
+  // Formatting and Defining as itself
+  strcpy(mac->name, Names[Data.ActiveMachine]);
+  mac->drain = Drainage[Data.ActiveMachine];
+  mac->output = mac->drain * RevenueMultiplier[Data.ActiveMachine];
+
+  strcpy(mac->NextName, Names[Data.ActiveMachine + 1]);
+  mac->NextDrain = Drainage[Data.ActiveMachine + 1];
+  mac->NextOutput = mac->NextDrain * RevenueMultiplier[Data.ActiveMachine + 1];
+  mac->price = Prices[Data.ActiveMachine + 1];
+  return;
 }

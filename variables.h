@@ -48,6 +48,7 @@ typedef struct {
   double genPerSec;
   double genPerClick;
   char Special[32];
+  double price;
 
   char NextName[32];
   double NextGen;
@@ -59,6 +60,7 @@ typedef struct {
   char name[32];
   double drain;
   double output;
+  double price;
 
   char NextName[32];
   double NextDrain;
