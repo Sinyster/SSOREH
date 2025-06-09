@@ -17,8 +17,8 @@ void DivideIntoThree();
 
 // Functions: Render Upgrade Screens
 void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2, Rectangle rec3);
-// Generator
-// Machines
+void RenderGeneratorUpgradeScreen();
+void RenderMachineUpgradeScreen();
 
 // Functions: Texts
 void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
@@ -233,6 +233,28 @@ int main(void) {
                                    HighVoltageUnlock);
         break;
       case UPG_GEN:
+        // Functionality
+        // Main Generator Upgrade Button
+        Rectangle MainGeneratorUpgrade = {Spacing, PanelHeight * 3 + Spacing,
+                                          ScreenWidth / 3 - Spacing * 2,
+                                          PanelHeight * 3};
+        isHovering = CheckCollisionPointRec(MousePoint, MainGeneratorUpgrade);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        DrawRectangleRec(MainGeneratorUpgrade,
+                         isHovering ? PanelBackgroundLight : BackgroundLight);
+        // if(isClicked)
+
+        Rectangle ExtraGeneratorUpgrade = {
+            Spacing,
+            MainGeneratorUpgrade.y + MainGeneratorUpgrade.height +
+                PanelHeight * 2,
+            ScreenWidth / 3 - Spacing * 2,
+            ScreenHeight - MainGeneratorUpgrade.height - PanelHeight * 7 -
+                Spacing};
+        isHovering = CheckCollisionPointRec(MousePoint, ExtraGeneratorUpgrade);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        DrawRectangleRec(ExtraGeneratorUpgrade,
+                         isHovering ? PanelBackgroundLight : BackgroundLight);
         break;
       case UPG_MAC:
         break;

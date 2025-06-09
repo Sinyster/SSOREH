@@ -11,6 +11,8 @@ typedef struct {
   int ActiveGenerator;
   int ActiveMachine;
 
+  float gasoline;
+
   int voltageBat;
   int voltageGen;
   int voltageMac;
@@ -57,6 +59,8 @@ typedef struct {
   char NextName[32];
   double NextGen;
   char NextSpecial[32];
+
+  int numOfSolarPanels;
 
 } Generator;
 
