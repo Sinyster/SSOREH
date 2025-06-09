@@ -2,7 +2,9 @@
 #define VAR_H
 
 #include "raylib.h"
+#include <string.h>
 
+// Struct for Game Screens
 typedef enum {
   SCREEN_PLAY,
   SCREEN_UPGRADE,
@@ -11,7 +13,19 @@ typedef enum {
   SCREEN_MENU
 } GameScreen;
 
+// Game Screens: Struct for different Upgrade Screens
 typedef enum { UPG_BAT, UPG_GEN, UPG_MAC } UpgradeScreen;
+
+// Struct for Batteries
+typedef struct {
+  char name[16];
+  double maxCapacity;
+  double actualCapacity;
+  double maxOutput;
+  double maxInput;
+
+  float percentage;
+} Battery;
 
 // Window Variables
 const float ScreenWidth = 1280.0f;
@@ -22,6 +36,8 @@ const char Title[8] = "SS-OREH";
 // Setting Default Values
 GameScreen CurrentScreen = SCREEN_PLAY;
 UpgradeScreen UpgScreen = UPG_BAT;
+
+Battery bat = {0};
 
 // Panel Variables
 const float PanelHeight = 40.0f;
@@ -51,4 +67,6 @@ bool isHovering = false;
 bool isClicked = false;
 bool isUpgPopUpShowed = false;
 
+// Game Varaibles
+int activeBattery = 0;
 #endif

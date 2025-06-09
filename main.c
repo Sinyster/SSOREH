@@ -7,6 +7,10 @@
 void RenderUpperPanel(Color bg);
 void RenderLowerPanel(Color bg);
 void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint);
+void RenderBatteryPlayScreen();
+
+// Functions: Render: Division
+void DivideIntoThree();
 
 // Functions: Texts
 void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
@@ -14,6 +18,13 @@ void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
 
 // Functions: Enable
 void EnableGameButton(Vector2 VectorPointer);
+
+// Functions: Calculations
+void CalculateBatteryPercentage();
+
+// Define stuff
+void defineBatteries(Battery *bat);
+
 int main(void) {
   // Base Vars - Windows
   InitWindow(ScreenWidth, ScreenHeight, Title);
@@ -24,6 +35,12 @@ int main(void) {
     ClearBackground(BackgroundWhite);
 
     Vector2 MousePoint = GetMousePosition();
+
+    // Game Calculations
+    CalculateBatteryPercentage();
+
+    // Define Batteries
+    defineBatteries(&bat);
 
     // Upper Panel
     RenderUpperPanel(PanelBackground);
@@ -46,6 +63,27 @@ int main(void) {
       isUpgPopUpShowed = false;
     }
 
+    switch (CurrentScreen) {
+    case SCREEN_PLAY:
+      // Layer 1: Division
+      DivideIntoThree();
+
+      // Layer 2: Texts
+      RenderBatteryPlayScreen();
+      break;
+    case SCREEN_UPGRADE:
+      break;
+    case SCREEN_STATS:
+      break;
+    case SCREEN_SETTINGS:
+      break;
+    case SCREEN_MENU:
+      break;
+    default:
+      break;
+    }
+
+    // It's down here cause of render layering
     // Render Upgrade Popup
     if (isUpgPopUpShowed) {
       RenderPopUp(PanelBackground, BtnUpgrade, MousePoint);
@@ -66,6 +104,7 @@ int main(void) {
   return 0;
 }
 
+// RENDER
 // Function for Rendering Background of Upper panel
 void RenderUpperPanel(Color bg) {
   DrawRectangle(0, 0, ScreenWidth, PanelHeight, bg);
@@ -75,28 +114,6 @@ void RenderUpperPanel(Color bg) {
 // Function for Rendering Background of Lower panel
 void RenderLowerPanel(Color bg) {
   DrawRectangle(0, ScreenHeight - PanelHeight, ScreenWidth, PanelHeight, bg);
-  return;
-}
-
-// Function for Rendering Upper Panel Button Texts - Even Active one
-void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
-                           Color Inactive) {
-  char buffer[128];
-  for (int i = 0; i < NumOfUPT; i++) {
-    const char *title = UpperPanelTitles[i];
-    if (i == CurrentScreen) {
-      snprintf(buffer, sizeof(buffer), "*%s*", title);
-    } else {
-      snprintf(buffer, sizeof(buffer), "%s", title);
-    }
-
-    float textWidth = MeasureText(buffer, FontSizeHeader);
-    float x = (ScreenWidth / NumOfUPT) * (i + 0.5f) - textWidth / 2;
-    float y = PanelHeight / 2 - FontSizeHeader / 2;
-
-    DrawText(buffer, x, y, FontSizeHeader,
-             (i == CurrentScreen) ? Active : Inactive);
-  }
   return;
 }
 
@@ -161,6 +178,76 @@ void RenderPopUp(Color bg, Rectangle Button, Vector2 MousePoint) {
   return;
 }
 
+// Function for drawing 3 division lines.
+void DivideIntoThree() {
+  for (int i = 0; i < 3; i++) {
+    DrawLine(ScreenWidth / 3 * i - 1, PanelHeight + Spacing,
+             ScreenWidth / 3 * i - 1, ScreenHeight - PanelHeight - Spacing,
+             BLACK);
+  }
+  return;
+}
+
+// Function for rendering battery info on screen
+void RenderBatteryPlayScreen() {
+  // Buffer Variable for formatting other vars
+  char buffer[128];
+
+  float x = 0.0f;
+  float y = 0.0f;
+  float fontSize = FontSizeText - 3;
+
+  Color color = DARKGRAY;
+
+  // Drawing Main Label + UnderLine
+  x = Spacing;
+  y = PanelHeight * 2;
+
+  snprintf(buffer, sizeof(buffer), "Battery: %s", bat.name);
+  DrawText(buffer, x, y, fontSize, BLACK);
+
+  // Actual Capacity
+  y += fontSize;
+
+  snprintf(buffer, sizeof(buffer), "Capacity: %0.2f Wh", bat.actualCapacity);
+  DrawText(buffer, x, y, fontSize, color);
+
+  // Capacity in %
+  y += fontSize;
+  snprintf(buffer, sizeof(buffer), "Capacity %: %0.0f", bat.percentage);
+  DrawText(buffer, x, y, fontSize, color);
+
+  // Max Capacity
+  y += fontSize;
+
+  snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.maxCapacity);
+  DrawText(buffer, x, y, fontSize, color);
+}
+
+// TEXTS
+// Function for Rendering Upper Panel Button Texts - Even Active one
+void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
+                           Color Inactive) {
+  char buffer[128];
+  for (int i = 0; i < NumOfUPT; i++) {
+    const char *title = UpperPanelTitles[i];
+    if (i == CurrentScreen) {
+      snprintf(buffer, sizeof(buffer), "*%s*", title);
+    } else {
+      snprintf(buffer, sizeof(buffer), "%s", title);
+    }
+
+    float textWidth = MeasureText(buffer, FontSizeHeader);
+    float x = (ScreenWidth / NumOfUPT) * (i + 0.5f) - textWidth / 2;
+    float y = PanelHeight / 2 - FontSizeHeader / 2;
+
+    DrawText(buffer, x, y, FontSizeHeader,
+             (i == CurrentScreen) ? Active : Inactive);
+  }
+  return;
+}
+
+// OTHER
 // Function for Game Button
 void EnableGameButton(Vector2 VectorPointer) {
   if (isGameButtonAlowed) {
@@ -173,6 +260,32 @@ void EnableGameButton(Vector2 VectorPointer) {
       isGameButtonAlowed = false;
       CurrentScreen = SCREEN_PLAY;
     }
+  }
+  return;
+}
+
+void CalculateBatteryPercentage() {
+  bat.percentage = 100.0f * (bat.actualCapacity / bat.maxCapacity);
+  return;
+}
+
+// Define Stuff
+void defineBatteries(Battery *bat) {
+  int battery = 0;
+  battery = activeBattery;
+  for (int i = 0; i < 2; i++) {
+    switch (battery) {
+    case 0:
+      // Base Battery
+      strcpy(bat->name, "Lithium Battery");
+      bat->maxCapacity = 1000.0; // Wh
+      bat->maxInput = 0.5;       // Wh
+      bat->maxOutput = 0.5;      // Wh
+      break;
+    case 1:
+      break;
+    }
+    battery += 1;
   }
   return;
 }
