@@ -175,38 +175,58 @@ int main(void) {
       switch (UpgScreen) {
       case UPG_BAT:
         // Functionality
+        // Low Voltage Upgrades
         Rectangle LowVoltageUnlock = {
             Spacing, PanelHeight * 3 + Spacing, ScreenWidth / 3 - Spacing * 2,
             ScreenHeight - PanelHeight * 4 - Spacing * 2};
 
-        isHovering = CheckCollisionPointRec(MousePoint, LowVoltageUnlock);
-        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-        DrawRectangleRec(LowVoltageUnlock,
-                         isHovering ? PanelBackgroundLight : BackgroundLight);
+        if (Data.voltageBat == 0) {
+          isHovering = CheckCollisionPointRec(MousePoint, LowVoltageUnlock);
+          isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+          DrawRectangleRec(LowVoltageUnlock,
+                           isHovering ? PanelBackgroundLight : BackgroundLight);
+          if (isClicked && Data.money >= bat.price) {
+            Data.money -= bat.price;
+            Data.ActiveBattery += 1;
+            // Function for increasing Voltage Level
+          }
+        }
 
-        // if(isClicked){}
-
+        // Medium Voltage Upgrades
         Rectangle MediumVoltageUnlock = {
             ScreenWidth / 3 + Spacing, PanelHeight * 3 + Spacing,
             ScreenWidth / 3 - Spacing * 2,
             ScreenHeight - PanelHeight * 4 - Spacing * 2};
 
-        isHovering = CheckCollisionPointRec(MousePoint, MediumVoltageUnlock);
-        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-        DrawRectangleRec(MediumVoltageUnlock,
-                         isHovering ? PanelBackgroundLight : BackgroundLight);
+        if (Data.voltageBat == 1) {
+          isHovering = CheckCollisionPointRec(MousePoint, MediumVoltageUnlock);
+          isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+          DrawRectangleRec(MediumVoltageUnlock,
+                           isHovering ? PanelBackgroundLight : BackgroundLight);
+          if (isClicked && Data.money >= bat.price) {
+            Data.money -= bat.price;
+            Data.ActiveBattery += 1;
+            // Function for increasing Voltage Level
+          }
+        }
 
-        // if(isClicked){}
-
+        // High Voltage Upgrades
         Rectangle HighVoltageUnlock = {
-            ScreenWidth - ScreenWidth / 3, PanelHeight * 3,
+            ScreenWidth - ScreenWidth / 3, PanelHeight * 3 + Spacing,
             ScreenWidth / 3 - Spacing * 2,
             ScreenHeight - PanelHeight * 4 - Spacing * 2};
 
-        isHovering = CheckCollisionPointRec(MousePoint, HighVoltageUnlock);
-        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-        DrawRectangleRec(HighVoltageUnlock,
-                         isHovering ? PanelBackgroundLight : BackgroundLight);
+        if (Data.voltageBat == 2) {
+          isHovering = CheckCollisionPointRec(MousePoint, HighVoltageUnlock);
+          isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+          DrawRectangleRec(HighVoltageUnlock,
+                           isHovering ? PanelBackgroundLight : BackgroundLight);
+          if (isClicked && Data.money >= bat.price) {
+            Data.money -= bat.price;
+            Data.ActiveBattery += 1;
+            // Function for increasing Voltage Level
+          }
+        }
 
         // Layer 1: Texts
         RenderBatteryUpgradeScreen(LowVoltageUnlock, MediumVoltageUnlock,
@@ -574,7 +594,7 @@ void DefineBatteries(Battery *bat) {
 
     double Capacities[] = {1000.0, 1500.0};
     double Inputs[] = {0.5, 3.0};
-    double Prices[] = {0.0, 500.0};
+    double Prices[] = {0.0, 10.0};
 
     // Formatting and Defining as itself
     strcpy(bat->name, Names[Data.ActiveBattery]);
@@ -731,6 +751,51 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
     snprintf(buffer, sizeof(buffer), "Locked");
     DrawText(buffer, x - (float)MeasureText(buffer, FontSizeHeader) / 2, y,
              FontSizeHeader, LightFontInactive);
+  } else {
+    // Next
+    snprintf(buffer, sizeof(buffer), "Next:");
+    x = rec2.x + Spacing;
+    y = rec2.y + Spacing;
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+    DrawLine(x, y + FontSizeText, rec1.x + rec1.width - Spacing,
+             y + FontSizeText, LightFontInactive);
+
+    // Next: Battery Name
+    y += FontSizeHeader;
+    snprintf(buffer, sizeof(buffer), "Battery: %s", bat.NextName);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Next: Battery Max Capacity
+    y += FontSizeText;
+    snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.NextMaxCap);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Next: Max Input
+    y += FontSizeText;
+    snprintf(buffer, sizeof(buffer), "Max Input: %0.2f W/s", bat.NextMaxInput);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Now Using
+    y = rec1.y + rec1.height / 2;
+    snprintf(buffer, sizeof(buffer), "Now Using:");
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+    DrawLine(x, y + FontSizeText, rec1.x + rec1.width - Spacing,
+             y + FontSizeText, LightFontInactive);
+
+    // Now Using: Name
+    y += FontSizeHeader;
+    snprintf(buffer, sizeof(buffer), "Battery %s", bat.name);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Now Using: Battery Max Capacity
+    y += FontSizeText;
+    snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.maxCapacity);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Now Using: Max Input
+    y += FontSizeText;
+    snprintf(buffer, sizeof(buffer), "Max Input: %0.2f", bat.maxInput);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   }
 
   // Third Segment: Header Text
@@ -746,6 +811,51 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
     snprintf(buffer, sizeof(buffer), "Locked");
     DrawText(buffer, x - (float)MeasureText(buffer, FontSizeHeader) / 2, y,
              FontSizeHeader, LightFontInactive);
+  } else {
+    // Next
+    snprintf(buffer, sizeof(buffer), "Next:");
+    x = rec3.x + Spacing;
+    y = rec3.y + Spacing;
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+    DrawLine(x, y + FontSizeText, rec1.x + rec1.width - Spacing,
+             y + FontSizeText, LightFontInactive);
+
+    // Next: Battery Name
+    y += FontSizeHeader;
+    snprintf(buffer, sizeof(buffer), "Battery: %s", bat.NextName);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Next: Battery Max Capacity
+    y += FontSizeText;
+    snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.NextMaxCap);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Next: Max Input
+    y += FontSizeText;
+    snprintf(buffer, sizeof(buffer), "Max Input: %0.2f W/s", bat.NextMaxInput);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Now Using
+    y = rec1.y + rec1.height / 2;
+    snprintf(buffer, sizeof(buffer), "Now Using:");
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+    DrawLine(x, y + FontSizeText, rec1.x + rec1.width - Spacing,
+             y + FontSizeText, LightFontInactive);
+
+    // Now Using: Name
+    y += FontSizeHeader;
+    snprintf(buffer, sizeof(buffer), "Battery %s", bat.name);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Now Using: Battery Max Capacity
+    y += FontSizeText;
+    snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.maxCapacity);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+    // Now Using: Max Input
+    y += FontSizeText;
+    snprintf(buffer, sizeof(buffer), "Max Input: %0.2f", bat.maxInput);
+    DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   }
 
   return;
