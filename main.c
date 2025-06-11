@@ -604,9 +604,23 @@ void TextBox(Rectangle bounds, const char *text, const char *Title, Font font,
 // Function for Setting up Texts for individual Information
 void SetTexts() {
   // Set Active Generator Information
-  snprintf(GeneratorInfoText, sizeof(GeneratorInfoText),
-           "Handcrank is a weird contraption. It looks like a rotating dong. "
-           "Try to touch it... You won't regret it.");
+  switch (Data.ActiveGenerator) {
+  case 0:
+    // HandCrank
+    snprintf(GeneratorInfoText, sizeof(GeneratorInfoText),
+             "Handcrank is a weird contraption. It looks like a rotating dong. "
+             "Try to touch it... You won't regret it.");
+    break;
+  case 1:
+    // Solar Panel
+    snprintf(GeneratorInfoText, sizeof(GeneratorInfoText),
+             "These strange panels generate electricity just by being exposed "
+             "to light. "
+             "I was eating some gummy bears, took a piss, and accidentally "
+             "peed neon-like glowing urine onto the panel. "
+             "I connected it to my phone — it charged to 100%.");
+    break;
+  }
   return;
 }
 
@@ -993,6 +1007,24 @@ void RenderGeneratorUpgradeScreen(Rectangle MainRec, Rectangle ExtraRec) {
       (float)MeasureText(buffer, FontSizeHeader) / 2;
   y = MainRec.y - PanelHeight;
   DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
+
+  // Next Generator Name
+  snprintf(buffer, sizeof(buffer), "%s", gen.NextName);
+  x = MainRec.x + Spacing;
+  y = MainRec.y + Spacing;
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+  // Generator Price
+  snprintf(buffer, sizeof(buffer), "Price: %0.2f$", gen.price);
+  x = MainRec.x + MainRec.width - (float)MeasureText(buffer, FontSizeText) -
+      Spacing;
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
+
+  // Specials
+  snprintf(buffer, sizeof(buffer), "Special: %s", gen.NextSpecial);
+  x = MainRec.x + Spacing;
+  y += FontSizeText;
+  DrawText(buffer, x, y, FontSizeText, LightFontInactive);
 
   // Extra Upgrade Title
   snprintf(buffer, sizeof(buffer), "Extra:");
