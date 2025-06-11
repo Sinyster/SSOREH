@@ -12,17 +12,24 @@ void RenderBatteryPlayScreen();
 void RenderGeneratorPlayScreen();
 void RenderMachinePlayScreen();
 
+void TextBox(Rectangle bounds, const char *text, const char *Title, Font font,
+             float fontSize, float spacing, Color textColor, Color borderColor,
+             Color bgColor);
+
 // Functions: Render: Division
 void DivideIntoThree();
 
 // Functions: Render Upgrade Screens
 void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2, Rectangle rec3);
-void RenderGeneratorUpgradeScreen();
+void RenderGeneratorUpgradeScreen(Rectangle MainRec, Rectangle ExtraRec);
 void RenderMachineUpgradeScreen();
 
 // Functions: Texts
 void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
                            Color Inactive);
+static void WrapTextToFit(const char *text, char *output, Font font,
+                          float fontSize, float spacing, float maxWidth);
+void SetTexts();
 
 // Functions: Enable
 void EnableGameButton(Vector2 VectorPointer);
@@ -39,8 +46,6 @@ void DefineGenerators(Generator *gen);
 void DefineMachines(Machines *mac);
 
 int main(void) {
-  Font defaultFont = GetFontDefault();
-
   // Base Vars - Windows
   InitWindow(ScreenWidth, ScreenHeight, Title);
   SetTargetFPS(TargetFps);
@@ -249,12 +254,16 @@ int main(void) {
             MainGeneratorUpgrade.y + MainGeneratorUpgrade.height +
                 PanelHeight * 2,
             ScreenWidth / 3 - Spacing * 2,
-            ScreenHeight - MainGeneratorUpgrade.height - PanelHeight * 7 -
-                Spacing};
+            ScreenHeight - MainGeneratorUpgrade.height - PanelHeight * 6 -
+                Spacing * 2};
         isHovering = CheckCollisionPointRec(MousePoint, ExtraGeneratorUpgrade);
         isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
         DrawRectangleRec(ExtraGeneratorUpgrade,
                          isHovering ? PanelBackgroundLight : BackgroundLight);
+
+        // Layer 2: Texts
+        RenderGeneratorUpgradeScreen(MainGeneratorUpgrade,
+                                     ExtraGeneratorUpgrade);
         break;
       case UPG_MAC:
         break;
@@ -530,6 +539,77 @@ void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
   return;
 }
 
+// Function for wrapping text...
+static void WrapTextToFit(const char *text, char *output, Font font,
+                          float fontSize, float spacing, float maxWidth) {
+  const char *wordStart = text;
+  char line[1024] = {0};
+  output[0] = '\0';
+
+  while (*wordStart) {
+    const char *wordEnd = wordStart;
+    while (*wordEnd && *wordEnd != ' ')
+      wordEnd++;
+
+    char word[128] = {0};
+    strncpy(word, wordStart, wordEnd - wordStart);
+    word[wordEnd - wordStart] = '\0';
+
+    char testLine[1024] = {0};
+    if (line[0] != '\0')
+      snprintf(testLine, sizeof(testLine), "%s %s", line, word);
+    else
+      snprintf(testLine, sizeof(testLine), "%s", word);
+
+    Vector2 size = MeasureTextEx(font, testLine, fontSize, spacing);
+    if (size.x > maxWidth && line[0] != '\0') {
+      strcat(output, line);
+      strcat(output, "\n");
+      snprintf(line, sizeof(line), "%s", word);
+    } else {
+      snprintf(line, sizeof(line), "%s", testLine);
+    }
+
+    wordStart = wordEnd;
+    while (*wordStart == ' ')
+      wordStart++;
+  }
+
+  strcat(output, line);
+  return;
+}
+
+// Function for Rendering reuseable Textbox
+void TextBox(Rectangle bounds, const char *text, const char *Title, Font font,
+             float fontSize, float spacing, Color textColor, Color borderColor,
+             Color bgColor) {
+  DrawRectangleRec(bounds, bgColor);
+  DrawRectangleLinesEx(bounds, 1, borderColor);
+
+  char wrappedText[2048];
+  WrapTextToFit(text, wrappedText, font, fontSize, spacing,
+                bounds.width - 10); // Padding
+
+  Vector2 pos = {bounds.x + 5, bounds.y + 5};
+  DrawTextEx(font, wrappedText, pos, fontSize, spacing, textColor);
+
+  // Title
+  float x = bounds.x + bounds.width / 2 -
+            (float)MeasureText(Title, FontSizeHeader) / 2;
+  float y = bounds.y - PanelHeight;
+  DrawText(Title, x, y, FontSizeHeader, LightFontInactive);
+  return;
+}
+
+// Function for Setting up Texts for individual Information
+void SetTexts() {
+  // Set Active Generator Information
+  snprintf(GeneratorInfoText, sizeof(GeneratorInfoText),
+           "Handcrank is a weird contraption. It looks like a rotating dong. "
+           "Try to touch it... You won't regret it.");
+  return;
+}
+
 #pragma region OTHER
 // Function for Game Button
 void EnableGameButton(Vector2 VectorPointer) {
@@ -637,60 +717,51 @@ void DefineBatteries(Battery *bat) {
 
 // Define Generators
 void DefineGenerators(Generator *gen) {
-  if (Data.voltageGen == 0) {
-    // Variables for Defining generators and easier choosement
-    char Names[][32] = {"HandCrank", "Solar Panel"};
-    char Specials[][32] = {"Is Manual", "Needs Sun light"};
+  // Variables for Defining generators and easier choosement
+  char Names[][32] = {"HandCrank", "Solar Panel"};
+  char Specials[][32] = {"Is Manual", "Needs Sun light"};
 
-    double Generates[] = {0.1, 1.5};
-    double Prices[] = {0.0, 500.0};
+  double Generates[] = {0.1, 1.5};
+  double Prices[] = {0.0, 500.0};
+  int HasExtra[] = {0, 1};
+  int NeedGas[] = {0, 0};
 
-    // Formatting and Defining as itself
-    strcpy(gen->name, Names[Data.ActiveGenerator]);
-    strcpy(gen->Special, Specials[Data.ActiveGenerator]);
-    if (Data.ActiveGenerator == 0) {
-      gen->genPerClick = Generates[Data.ActiveGenerator];
-    } else {
-      gen->genPerSec = Generates[Data.ActiveGenerator];
-    }
-
-    strcpy(gen->NextName, Names[Data.ActiveGenerator + 1]);
-    strcpy(gen->NextSpecial, Specials[Data.ActiveGenerator + 1]);
-    gen->NextGen = Generates[Data.ActiveGenerator + 1];
-    gen->price = Prices[Data.ActiveGenerator + 1];
-  } else if (Data.voltageGen == 1) {
-    //
-  } else if (Data.voltageGen == 2) {
-    //
+  // Formatting and Defining as itself
+  strcpy(gen->name, Names[Data.ActiveGenerator]);
+  strcpy(gen->Special, Specials[Data.ActiveGenerator]);
+  if (Data.ActiveGenerator == 0) {
+    gen->genPerClick = Generates[Data.ActiveGenerator];
+  } else {
+    gen->genPerSec = Generates[Data.ActiveGenerator];
   }
+  gen->hasExtra = HasExtra[Data.ActiveGenerator];
+  gen->needGas = HasExtra[Data.ActiveGenerator];
+
+  strcpy(gen->NextName, Names[Data.ActiveGenerator + 1]);
+  strcpy(gen->NextSpecial, Specials[Data.ActiveGenerator + 1]);
+  gen->NextGen = Generates[Data.ActiveGenerator + 1];
+  gen->price = Prices[Data.ActiveGenerator + 1];
   return;
 }
 
 // Define Machines
 void DefineMachines(Machines *mac) {
-  if (Data.voltageMac == 0) {
-    // Variables for Defining machines and easier choosement
-    char Names[][32] = {"Smoke Detector", "LED LightBulb"};
+  // Variables for Defining machines and easier choosement
+  char Names[][32] = {"Smoke Detector", "LED LightBulb"};
 
-    double Drainage[] = {1.0, 3.0};
-    double RevenueMultiplier[] = {1.1, 1.15};
-    double Prices[] = {0.0, 500.0};
+  double Drainage[] = {1.0, 3.0};
+  double RevenueMultiplier[] = {1.1, 1.15};
+  double Prices[] = {0.0, 500.0};
 
-    // Formatting and Defining as itself
-    strcpy(mac->name, Names[Data.ActiveMachine]);
-    mac->drain = Drainage[Data.ActiveMachine];
-    mac->output = mac->drain * RevenueMultiplier[Data.ActiveMachine];
+  // Formatting and Defining as itself
+  strcpy(mac->name, Names[Data.ActiveMachine]);
+  mac->drain = Drainage[Data.ActiveMachine];
+  mac->output = mac->drain * RevenueMultiplier[Data.ActiveMachine];
 
-    strcpy(mac->NextName, Names[Data.ActiveMachine + 1]);
-    mac->NextDrain = Drainage[Data.ActiveMachine + 1];
-    mac->NextOutput =
-        mac->NextDrain * RevenueMultiplier[Data.ActiveMachine + 1];
-    mac->price = Prices[Data.ActiveMachine + 1];
-  } else if (Data.voltageMac == 1) {
-    //
-  } else if (Data.voltageMac == 2) {
-    //
-  }
+  strcpy(mac->NextName, Names[Data.ActiveMachine + 1]);
+  mac->NextDrain = Drainage[Data.ActiveMachine + 1];
+  mac->NextOutput = mac->NextDrain * RevenueMultiplier[Data.ActiveMachine + 1];
+  mac->price = Prices[Data.ActiveMachine + 1];
   return;
 }
 
@@ -701,6 +772,11 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
   char buffer[128];
   float x = 0.0f;
   float y = 0.0f;
+
+  // Render OutLine of Upgrades
+  DrawRectangleLines(rec1.x, rec1.y, rec1.width, rec1.height, LightFontActive);
+  DrawRectangleLines(rec2.x, rec2.y, rec2.width, rec2.height, LightFontActive);
+  DrawRectangleLines(rec3.x, rec3.y, rec3.width, rec3.height, LightFontActive);
 
 #pragma region Battery Low
   // First Segment: Header Text
@@ -895,5 +971,50 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
     snprintf(buffer, sizeof(buffer), "Max Input: %0.2f", bat.maxInput);
     DrawText(buffer, x, y, FontSizeText, LightFontInactive);
   }
+  return;
+}
+
+#pragma region Generator
+void RenderGeneratorUpgradeScreen(Rectangle MainRec, Rectangle ExtraRec) {
+  char buffer[1024];
+
+  float x = 0.0f;
+  float y = 0.0f;
+
+  // Render OutLine of Upgrades
+  DrawRectangleLines(MainRec.x, MainRec.y, MainRec.width, MainRec.height,
+                     LightFontActive);
+  DrawRectangleLines(ExtraRec.x, ExtraRec.y, ExtraRec.width, ExtraRec.height,
+                     LightFontActive);
+
+  // Main Upgrade Title
+  snprintf(buffer, sizeof(buffer), "Upgrade:");
+  x = MainRec.x + MainRec.width / 2 -
+      (float)MeasureText(buffer, FontSizeHeader) / 2;
+  y = MainRec.y - PanelHeight;
+  DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
+
+  // Extra Upgrade Title
+  snprintf(buffer, sizeof(buffer), "Extra:");
+  x = ExtraRec.x + ExtraRec.width / 2 -
+      (float)MeasureText(buffer, FontSizeHeader) / 2;
+  y = ExtraRec.y - PanelHeight;
+  DrawText(buffer, x, y, FontSizeHeader, LightFontInactive);
+
+  // Now Using
+  Rectangle NowUsing = {ScreenWidth / 3 + Spacing, PanelHeight * 3 + Spacing,
+                        ScreenWidth / 3 - Spacing * 2,
+                        ScreenHeight - PanelHeight * 4 - Spacing * 2};
+  DrawRectangleLines(NowUsing.x, NowUsing.y, NowUsing.width, NowUsing.height,
+                     LightFontActive);
+
+  // Information
+  Rectangle TextRec = {ScreenWidth - ScreenWidth / 3 + Spacing,
+                       PanelHeight * 3 + Spacing, ScreenWidth / 3 - Spacing * 2,
+                       ScreenHeight - PanelHeight * 4 - Spacing * 2};
+  SetTexts();
+  snprintf(buffer, sizeof(buffer), "Information:");
+  TextBox(TextRec, GeneratorInfoText, buffer, GetFontDefault(), FontSizeText,
+          3.0f, LightFontInactive, LightFontActive, BackgroundLight);
   return;
 }

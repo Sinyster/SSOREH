@@ -11,11 +11,7 @@ typedef struct {
   int ActiveGenerator;
   int ActiveMachine;
 
-  float gasoline;
-
   int voltageBat;
-  int voltageGen;
-  int voltageMac;
 
   // Sunlight
   float sunlight;
@@ -61,7 +57,10 @@ typedef struct {
   char NextSpecial[32];
 
   int numOfSolarPanels;
+  int hasExtra;
 
+  float gasoline;
+  int needGas;
 } Generator;
 
 typedef struct {
@@ -148,5 +147,8 @@ float InputUsedThisSecond = 0.0f;
 
 // Game Variables: Selling
 float ActualOutput = 0.0f;
+
+// Texts
+char GeneratorInfoText[2048] = {0};
 
 #endif
