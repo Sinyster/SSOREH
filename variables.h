@@ -100,6 +100,11 @@ Machines mac = {0};
 const float PanelHeight = 40.0f;
 const float Spacing = 10.0f;
 
+// Button
+Rectangle SellBtn = {ScreenWidth / 3 * 2, PanelHeight + Spacing,
+                     ScreenWidth / 3,
+                     ScreenHeight - PanelHeight * 2 - Spacing * 2};
+
 // Color Palletes
 // Light Mode
 Color LightBackground = WHITE;

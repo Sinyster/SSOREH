@@ -52,8 +52,8 @@ int main(void) {
     activeBackground = LightBackground;
     activePanelBackground = LightPanelBackground;
     activeHover = LightHover;
-    activeFontActive = activeFontActive;
-    activeFontInactive = activeFontInactive;
+    activeFontActive = LightFontActive;
+    activeFontInactive = LightFontInactive;
   } else {
     // Darkmode
   }
@@ -71,6 +71,27 @@ int main(void) {
     // Game Calculations
     CalculateBatteryPercentage();
     CalculateSunlight();
+
+    if (isGenerating) {
+      GeneratingElectricity();
+    }
+
+    if (isSelling) {
+      GeneratingMoney();
+      ActualOutput = mac.drain;
+      DrawText("Turn Off",
+               SellBtn.x + SellBtn.width / 2 -
+                   (float)MeasureText("Turn Off", FontSizeHeader) / 2,
+               ScreenHeight - PanelHeight * 3, FontSizeHeader,
+               activeFontInactive);
+    } else {
+      ActualOutput = 0.0f;
+      DrawText("Turn On",
+               SellBtn.x + SellBtn.width / 2 -
+                   (float)MeasureText("Turn On", FontSizeHeader) / 2,
+               ScreenHeight - PanelHeight * 3, FontSizeHeader,
+               activeFontInactive);
+    }
 
     // Define Batteries
     DefineBatteries(&bat);
@@ -139,14 +160,7 @@ int main(void) {
         }
       }
 
-      if (isGenerating) {
-        GeneratingElectricity();
-      }
-
       // Selling Function
-      Rectangle SellBtn = {ScreenWidth / 3 * 2, PanelHeight + Spacing,
-                           ScreenWidth / 3,
-                           ScreenHeight - PanelHeight * 2 - Spacing * 2};
       isHovering = CheckCollisionPointRec(MousePoint, SellBtn);
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
       DrawRectangleRec(SellBtn,
@@ -156,22 +170,6 @@ int main(void) {
         isSelling = true;
       } else if (isClicked && isSelling) {
         isSelling = false;
-      }
-      if (isSelling) {
-        GeneratingMoney();
-        ActualOutput = mac.drain;
-        DrawText("Turn Off",
-                 SellBtn.x + SellBtn.width / 2 -
-                     (float)MeasureText("Turn Off", FontSizeHeader) / 2,
-                 ScreenHeight - PanelHeight * 3, FontSizeHeader,
-                 activeFontInactive);
-      } else {
-        ActualOutput = 0.0f;
-        DrawText("Turn On",
-                 SellBtn.x + SellBtn.width / 2 -
-                     (float)MeasureText("Turn On", FontSizeHeader) / 2,
-                 ScreenHeight - PanelHeight * 3, FontSizeHeader,
-                 activeFontInactive);
       }
 
       // Layer 1: Lower Panel
@@ -1049,12 +1047,54 @@ void RenderGeneratorUpgradeScreen(Rectangle MainRec, Rectangle ExtraRec) {
   y = ExtraRec.y - PanelHeight;
   DrawText(buffer, x, y, FontSizeHeader, activeFontInactive);
 
+  if (Data.ActiveGenerator == 1) {
+    // Solar Panel
+    snprintf(buffer, sizeof(buffer), "Additional Panel");
+    x = ExtraRec.x + Spacing;
+    y = ExtraRec.y + Spacing;
+    DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+  } else {
+    // If not Additional upgrades avalaible
+    snprintf(buffer, sizeof(buffer), "N/A");
+    x = ExtraRec.x + ExtraRec.width / 2 -
+        (float)MeasureText(buffer, FontSizeHeader) / 2;
+    y = ExtraRec.y + ExtraRec.height / 2;
+    DrawText(buffer, x, y, FontSizeHeader, activeFontInactive);
+  }
+
   // Now Using
   Rectangle NowUsing = {ScreenWidth / 3 + Spacing, PanelHeight * 3 + Spacing,
                         ScreenWidth / 3 - Spacing * 2,
                         ScreenHeight - PanelHeight * 4 - Spacing * 2};
   DrawRectangleLines(NowUsing.x, NowUsing.y, NowUsing.width, NowUsing.height,
                      activeFontActive);
+
+  // Title
+  snprintf(buffer, sizeof(buffer), "Now Using:");
+  x = NowUsing.x + Spacing;
+  y = NowUsing.y + Spacing;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+  DrawLine(x, y + FontSizeText, x + NowUsing.width - Spacing, y + FontSizeText,
+           activeFontInactive);
+
+  snprintf(buffer, sizeof(buffer), "%s", gen.name);
+  y += FontSizeHeader;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  // Generates
+  if (Data.ActiveGenerator == 0) {
+    snprintf(buffer, sizeof(buffer), "Generates: %0.2f W/click",
+             gen.genPerClick);
+  } else {
+    snprintf(buffer, sizeof(buffer), "Generates: %0.2f W/s", gen.genPerSec);
+  }
+  y += FontSizeText;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  // Specials
+  snprintf(buffer, sizeof(buffer), "Specials: %s", gen.Special);
+  y += FontSizeText;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
 
   // Information
   Rectangle TextRec = {ScreenWidth - ScreenWidth / 3 + Spacing,
