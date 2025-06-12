@@ -27,8 +27,8 @@ void RenderMachineUpgradeScreen();
 // Functions: Texts
 void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
                            Color Inactive);
-static void WrapTextToFit(const char *text, char *output, Font font,
-                          float fontSize, float spacing, float maxWidth);
+void WrapTextToFit(const char *text, char *output, Font font, float fontSize,
+                   float spacing, float maxWidth);
 void SetTexts();
 
 // Functions: Enable
@@ -70,28 +70,6 @@ int main(void) {
 
     // Game Calculations
     CalculateBatteryPercentage();
-    CalculateSunlight();
-
-    if (isGenerating) {
-      GeneratingElectricity();
-    }
-
-    if (isSelling) {
-      GeneratingMoney();
-      ActualOutput = mac.drain;
-      DrawText("Turn Off",
-               SellBtn.x + SellBtn.width / 2 -
-                   (float)MeasureText("Turn Off", FontSizeHeader) / 2,
-               ScreenHeight - PanelHeight * 3, FontSizeHeader,
-               activeFontInactive);
-    } else {
-      ActualOutput = 0.0f;
-      DrawText("Turn On",
-               SellBtn.x + SellBtn.width / 2 -
-                   (float)MeasureText("Turn On", FontSizeHeader) / 2,
-               ScreenHeight - PanelHeight * 3, FontSizeHeader,
-               activeFontInactive);
-    }
 
     // Define Batteries
     DefineBatteries(&bat);
@@ -119,6 +97,9 @@ int main(void) {
 
     switch (CurrentScreen) {
     case SCREEN_PLAY:
+      // Calculations
+      CalculateSunlight();
+
       // Generating Function
       Rectangle GenBtn = {ScreenWidth / 3, PanelHeight + Spacing,
                           ScreenWidth / 3 - 4,
@@ -160,6 +141,10 @@ int main(void) {
         }
       }
 
+      if (isGenerating) {
+        GeneratingElectricity();
+      }
+
       // Selling Function
       isHovering = CheckCollisionPointRec(MousePoint, SellBtn);
       isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
@@ -170,6 +155,23 @@ int main(void) {
         isSelling = true;
       } else if (isClicked && isSelling) {
         isSelling = false;
+      }
+
+      if (isSelling) {
+        GeneratingMoney();
+        ActualOutput = mac.drain;
+        DrawText("Turn Off",
+                 SellBtn.x + SellBtn.width / 2 -
+                     (float)MeasureText("Turn Off", FontSizeHeader) / 2,
+                 ScreenHeight - PanelHeight * 3, FontSizeHeader,
+                 activeFontInactive);
+      } else {
+        ActualOutput = 0.0f;
+        DrawText("Turn On",
+                 SellBtn.x + SellBtn.width / 2 -
+                     (float)MeasureText("Turn On", FontSizeHeader) / 2,
+                 ScreenHeight - PanelHeight * 3, FontSizeHeader,
+                 activeFontInactive);
       }
 
       // Layer 1: Lower Panel
@@ -554,8 +556,8 @@ void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
 }
 
 // Function for wrapping text...
-static void WrapTextToFit(const char *text, char *output, Font font,
-                          float fontSize, float spacing, float maxWidth) {
+void WrapTextToFit(const char *text, char *output, Font font, float fontSize,
+                   float spacing, float maxWidth) {
   const char *wordStart = text;
   char line[1024] = {0};
   output[0] = '\0';
