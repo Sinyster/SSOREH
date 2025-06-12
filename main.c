@@ -119,23 +119,21 @@ int main(void) {
       if (isClicked) {
         if (Data.ActiveGenerator == 0) {
           float toAdd = gen.genPerClick;
+          float availableCapacity = bat.maxInput - InputUsedThisSecond;
 
-          if (InputUsedThisSecond + toAdd <= bat.maxInput) {
-            bat.actualCapacity += toAdd;
-            InputUsedThisSecond += toAdd;
-          } else {
-            float remaining = bat.maxInput - InputUsedThisSecond;
-            if (remaining > 0.0f) {
-              bat.actualCapacity += remaining;
-              InputUsedThisSecond += remaining;
-            }
+          float actualToAdd =
+              (toAdd <= availableCapacity) ? toAdd : availableCapacity;
+
+          if (actualToAdd > 0.0f) {
+            bat.actualCapacity += actualToAdd;
+            InputUsedThisSecond += actualToAdd;
           }
-          input = InputUsedThisSecond;
 
-          if (bat.actualCapacity >= bat.maxCapacity) {
+          if (bat.actualCapacity > bat.maxCapacity) {
             bat.actualCapacity = bat.maxCapacity;
           }
 
+          input = InputUsedThisSecond;
         } else {
           isGenerating = !isGenerating;
         }
@@ -260,7 +258,13 @@ int main(void) {
         isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
         DrawRectangleRec(MainGeneratorUpgrade,
                          isHovering ? activePanelBackground : activeBackground);
-        // if(isClicked)
+        if (isClicked && Data.money >= gen.price) {
+          Data.ActiveGenerator += 1;
+          if (Data.ActiveGenerator == 1) {
+            gen.numOfSolarPanels += 1;
+          }
+          Data.money -= gen.price;
+        }
 
         Rectangle ExtraGeneratorUpgrade = {
             Spacing,
@@ -348,7 +352,7 @@ void RenderLowerPanel(Color bg) {
   DrawText(buffer, x, y, FontSizeText, activeFontInactive);
 
   // Electricity Input
-  snprintf(buffer, sizeof(buffer), "Input: %0.2f", input);
+  snprintf(buffer, sizeof(buffer), "Input: %0.5f", input);
   x = ScreenWidth / NumOfUPT + (ScreenWidth / NumOfUPT / 2) -
       (float)MeasureText(buffer, FontSizeText) / 2;
   DrawText(buffer, x, y, FontSizeText, activeFontInactive);
@@ -697,7 +701,31 @@ void GeneratingElectricity() {
     return;
   }
 
-  bat.actualCapacity += gen.genPerSec / TargetFps;
+  float generated = 0.0f;
+  if (Data.ActiveGenerator == 1) {
+    // Solar Panel
+    if (Data.sunlight == 0) {
+      generated = 0.0f;
+    } else {
+      generated =
+          (gen.genPerSec * gen.numOfSolarPanels * (Data.sunlight / 100)) /
+          TargetFps;
+    }
+    if (generated >= bat.maxInput) {
+      generated = bat.maxInput;
+    }
+    bat.actualCapacity += generated;
+    input = generated;
+  } else {
+    // Other
+    generated = gen.genPerSec / TargetFps;
+    if (generated >= bat.maxInput) {
+      generated = bat.maxInput;
+    }
+    bat.actualCapacity += generated;
+    input = generated;
+  }
+
   return;
 }
 
@@ -726,7 +754,7 @@ void DefineBatteries(Battery *bat) {
 
     double Capacities[] = {1000.0, 1500.0};
     double Inputs[] = {0.5, 3.0};
-    double Prices[] = {0.0, 10.0};
+    double Prices[] = {0.0, 2.0};
 
     // Formatting and Defining as itself
     strcpy(bat->name, Names[Data.ActiveBattery]);
@@ -752,7 +780,7 @@ void DefineGenerators(Generator *gen) {
   char Specials[][32] = {"Is Manual", "Needs Sun light"};
 
   double Generates[] = {0.1, 1.5};
-  double Prices[] = {0.0, 500.0};
+  double Prices[] = {0.0, 2.0};
   int HasExtra[] = {0, 1};
   int NeedGas[] = {0, 0};
 
