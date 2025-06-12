@@ -148,6 +148,7 @@ bool isSelling = false;
 
 // Game Variables
 float input = 0.0f;
+float priceOfAnotherPanel = 0.0f;
 
 // Game Variables: Sunlight
 const int DayMinutes = 960.0f;

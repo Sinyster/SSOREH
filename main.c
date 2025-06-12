@@ -68,6 +68,11 @@ int main(void) {
 
     Vector2 MousePoint = GetMousePosition();
 
+    // Default Variables
+    if (Data.ActiveGenerator == 1) {
+      priceOfAnotherPanel = gen.numOfSolarPanels * 2.0f;
+    }
+
     // Game Calculations
     CalculateBatteryPercentage();
 
@@ -277,6 +282,13 @@ int main(void) {
         isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
         DrawRectangleRec(ExtraGeneratorUpgrade,
                          isHovering ? activePanelBackground : activeBackground);
+
+        if (Data.ActiveGenerator == 1) {
+          if (isClicked && Data.money >= priceOfAnotherPanel) {
+            gen.numOfSolarPanels += 1;
+            Data.money -= priceOfAnotherPanel;
+          }
+        }
 
         // Layer 2: Texts
         RenderGeneratorUpgradeScreen(MainGeneratorUpgrade,
@@ -1082,6 +1094,11 @@ void RenderGeneratorUpgradeScreen(Rectangle MainRec, Rectangle ExtraRec) {
     snprintf(buffer, sizeof(buffer), "Additional Panel");
     x = ExtraRec.x + Spacing;
     y = ExtraRec.y + Spacing;
+    DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+    // Price
+    snprintf(buffer, sizeof(buffer), "Price: %0.2f", priceOfAnotherPanel);
+    y += FontSizeText;
     DrawText(buffer, x, y, FontSizeText, activeFontInactive);
   } else {
     // If not Additional upgrades avalaible
