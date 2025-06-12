@@ -102,11 +102,17 @@ const float Spacing = 10.0f;
 
 // Color Palletes
 // Light Mode
-Color BackgroundLight = WHITE;
-Color PanelBackgroundLight = LIGHTGRAY;
+Color LightBackground = WHITE;
+Color LightPanelBackground = LIGHTGRAY;
 Color LightFontInactive = DARKGRAY;
 Color LightFontActive = BLACK;
-Color HoverLight = GRAY;
+Color LightHover = GRAY;
+
+Color activeBackground;
+Color activePanelBackground;
+Color activeFontInactive;
+Color activeFontActive;
+Color activeHover;
 
 // Font Variables
 const float FontSizeHeader = 32.0f;
@@ -125,6 +131,7 @@ int NumOfUPUT = sizeof(UpgradePopupTitles) / sizeof(UpgradePopupTitles[0]);
 // Function Variables
 bool isHovering = false;
 bool isClicked = false;
+bool isDarkmode = false;
 
 bool isGameButtonAlowed = false;
 bool isUpgPopUpShowed = false;
