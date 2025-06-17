@@ -677,6 +677,12 @@ void SetTexts() {
              "This device would be nice to have if your grandma is a heavy "
              "smoker. Think about buying one.");
     break;
+  case 1:
+    // LED Diode
+    snprintf(MachineInfoText, sizeof(MachineInfoText),
+             "Everyone sticks LED strip to ceiling corners of their rooms. I "
+             "think they're fucking disgusting. Try ending your life.");
+    break;
   }
   return;
 }
@@ -786,14 +792,46 @@ void GeneratingMoney() {
 void DefineBatteries(Battery *bat) {
   // Variables for Defining batteries and easier choosement (Low Voltage)
   if (Data.voltageBat == 0) {
-    char Names[][32] = {
-        "Lithium-Ion",
-        "Lead-Acid",
-    };
+    char Names[][32] = {"Lithium-Ion",          "Alkaline",
+                        "Nickel-Metal Hydride", "Lithium-Polymer",
+                        "Solid-State",          "Medium Voltage"};
 
-    double Capacities[] = {1000.0, 1500.0};
-    double Inputs[] = {0.5, 3.0};
-    double Prices[] = {0.0, 2.0};
+    double Capacities[] = {// Lithium-Ion
+                           250.0,
+                           // Alkaline
+                           500.0,
+                           // Nickel-Metal Hydride
+                           500.0,
+                           // Lithium-Polymer
+                           750.0,
+                           // Solid-State
+                           1000.0,
+                           // Medium Voltage
+                           0.0};
+    double Inputs[] = {// Lithium-Ion
+                       0.2,
+                       // Alkaline
+                       0.4,
+                       // Nickel-Metal Hydride
+                       0.75,
+                       // Lithium-Polymer
+                       0.75,
+                       // Solid-State
+                       1.0,
+                       // Medium Voltage
+                       0.0};
+    double Prices[] = {// Lithium-Ion
+                       0.0,
+                       // Alkaline
+                       1000.0,
+                       // Nickel-Metal Hydride
+                       1250.0,
+                       // Lithium-Polymer
+                       2000.0,
+                       // Solid-State
+                       3000.0,
+                       // Medium Voltage
+                       5000.0};
 
     // Formatting and Defining as itself
     strcpy(bat->name, Names[Data.ActiveBattery]);
@@ -844,7 +882,7 @@ void DefineGenerators(Generator *gen) {
 // Define Machines
 void DefineMachines(Machines *mac) {
   // Variables for Defining machines and easier choosement
-  char Names[][32] = {"Smoke Detector", "LED LightBulb"};
+  char Names[][32] = {"Smoke Detector", "LED Diode"};
 
   double Drainage[] = {1.0, 3.0};
   double RevenueMultiplier[] = {1.1, 1.15};
