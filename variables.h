@@ -151,8 +151,8 @@ float input = 0.0f;
 float priceOfAnotherPanel = 0.0f;
 
 // Game Variables: Sunlight
-const int DayMinutes = 960.0f;
-const int NightMinutes = 480.0f;
+const int DayMinutes = 960.0f;   // 960
+const int NightMinutes = 480.0f; // 480
 
 // Game Variables: Input
 float InputTimer = 0.0f;
@@ -163,5 +163,6 @@ float ActualOutput = 0.0f;
 
 // Texts
 char GeneratorInfoText[2048] = {0};
+char MachineInfoText[2048] = {0};
 
 #endif

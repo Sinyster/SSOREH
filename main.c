@@ -22,7 +22,7 @@ void DivideIntoThree();
 // Functions: Render Upgrade Screens
 void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2, Rectangle rec3);
 void RenderGeneratorUpgradeScreen(Rectangle MainRec, Rectangle ExtraRec);
-void RenderMachineUpgradeScreen();
+void RenderMachineUpgradeScreen(Rectangle Main);
 
 // Functions: Texts
 void RenderUpperPanelTexts(GameScreen CurrentScreen, Color Active,
@@ -70,7 +70,7 @@ int main(void) {
 
     // Default Variables
     if (Data.ActiveGenerator == 1) {
-      priceOfAnotherPanel = gen.numOfSolarPanels * 2.0f;
+      priceOfAnotherPanel = gen.numOfSolarPanels * 4.4f;
     }
 
     // Game Calculations
@@ -264,11 +264,11 @@ int main(void) {
         DrawRectangleRec(MainGeneratorUpgrade,
                          isHovering ? activePanelBackground : activeBackground);
         if (isClicked && Data.money >= gen.price) {
+          Data.money -= gen.price;
           Data.ActiveGenerator += 1;
           if (Data.ActiveGenerator == 1) {
             gen.numOfSolarPanels += 1;
           }
-          Data.money -= gen.price;
         }
 
         Rectangle ExtraGeneratorUpgrade = {
@@ -295,6 +295,22 @@ int main(void) {
                                      ExtraGeneratorUpgrade);
         break;
       case UPG_MAC:
+        // Functionality
+        // Layer 1: Buttons
+        Rectangle MacUpgrade = {Spacing, PanelHeight * 3 + Spacing,
+                                ScreenWidth / 3 - Spacing * 2, PanelHeight * 3};
+        isHovering = CheckCollisionPointRec(MousePoint, MacUpgrade);
+        isClicked = isHovering && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        DrawRectangleRec(MacUpgrade,
+                         isHovering ? activePanelBackground : activeBackground);
+
+        if (isClicked && Data.money >= mac.price) {
+          Data.money -= mac.price;
+          Data.ActiveMachine += 1;
+        }
+
+        // Layer 2: Texts
+        RenderMachineUpgradeScreen(MacUpgrade);
         break;
       }
       break;
@@ -469,7 +485,7 @@ void RenderBatteryPlayScreen() {
   // Actual Capacity
   y += FontSizeText;
 
-  snprintf(buffer, sizeof(buffer), "Capacity: %0.2f Wh", bat.actualCapacity);
+  snprintf(buffer, sizeof(buffer), "Capacity: %0.5f Wh", bat.actualCapacity);
   DrawText(buffer, x, y, FontSizeText, color);
 
   // Capacity in %
@@ -653,6 +669,15 @@ void SetTexts() {
              "I connected it to my phone — it charged to 100%.");
     break;
   }
+
+  switch (Data.ActiveMachine) {
+  case 0:
+    // Smoke Detector
+    snprintf(MachineInfoText, sizeof(MachineInfoText),
+             "This device would be nice to have if your grandma is a heavy "
+             "smoker. Think about buying one.");
+    break;
+  }
   return;
 }
 
@@ -720,9 +745,11 @@ void GeneratingElectricity() {
       generated = 0.0f;
     } else {
       generated =
-          (gen.genPerSec * gen.numOfSolarPanels * (Data.sunlight / 100)) /
+          ((gen.genPerSec * gen.numOfSolarPanels * (Data.sunlight / 100)) /
+           TargetFps) /
           TargetFps;
     }
+
     if (generated >= bat.maxInput) {
       generated = bat.maxInput;
     }
@@ -821,7 +848,7 @@ void DefineMachines(Machines *mac) {
 
   double Drainage[] = {1.0, 3.0};
   double RevenueMultiplier[] = {1.1, 1.15};
-  double Prices[] = {0.0, 500.0};
+  double Prices[] = {0.0, 2.0};
 
   // Formatting and Defining as itself
   strcpy(mac->name, Names[Data.ActiveMachine]);
@@ -1121,7 +1148,8 @@ void RenderGeneratorUpgradeScreen(Rectangle MainRec, Rectangle ExtraRec) {
   x = NowUsing.x + Spacing;
   y = NowUsing.y + Spacing;
   DrawText(buffer, x, y, FontSizeText, activeFontInactive);
-  DrawLine(x, y + FontSizeText, x + NowUsing.width - Spacing, y + FontSizeText,
+  DrawLine(x, y + FontSizeText,
+           x + (float)MeasureText("Now Using:", FontSizeText), y + FontSizeText,
            activeFontInactive);
 
   snprintf(buffer, sizeof(buffer), "%s", gen.name);
@@ -1150,6 +1178,88 @@ void RenderGeneratorUpgradeScreen(Rectangle MainRec, Rectangle ExtraRec) {
   SetTexts();
   snprintf(buffer, sizeof(buffer), "Information:");
   TextBox(TextRec, GeneratorInfoText, buffer, GetFontDefault(), FontSizeText,
+          3.0f, activeFontInactive, activeFontActive, activeBackground);
+  return;
+}
+
+#pragma region Machine
+// Function for rendering Machine Upgrades
+void RenderMachineUpgradeScreen(Rectangle Main) {
+  char buffer[128];
+
+  float x = 0.0f;
+  float y = 0.0f;
+
+  // Render Button title
+  x = Main.x + Main.width / 2 -
+      (float)MeasureText("Upgrade:", FontSizeHeader) / 2;
+  y = Main.y - PanelHeight;
+  DrawText("Upgrade:", x, y, FontSizeHeader, activeFontInactive);
+  // Render Button upgrade Outline
+  DrawRectangleLines(Main.x, Main.y, Main.width, Main.height,
+                     activeFontInactive);
+
+  // Name of next upgrade
+  snprintf(buffer, sizeof(buffer), "%s", mac.NextName);
+  x = Main.x + Spacing;
+  y = Main.y + Spacing;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  // Price
+  snprintf(buffer, sizeof(buffer), "Price: %0.2f$", mac.price);
+  x = Main.x + (Main.width - (float)MeasureText(buffer, FontSizeText)) -
+      Spacing;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  x = Main.x + Spacing;
+  // Stats
+  // Stats: Drain
+  snprintf(buffer, sizeof(buffer), "Drains: %0.2f W/s", mac.NextDrain);
+  y += FontSizeText;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  // Stats: Revenue
+  snprintf(buffer, sizeof(buffer), "Revenue: %0.2f$", mac.NextOutput);
+  y += FontSizeText;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  // Now Using
+  Rectangle NowUsing = {ScreenWidth / 3 + Spacing, PanelHeight * 3 + Spacing,
+                        ScreenWidth / 3 - Spacing * 2,
+                        ScreenHeight - PanelHeight * 4 - Spacing * 2};
+  DrawRectangleRec(NowUsing, activeBackground);
+  DrawRectangleLines(NowUsing.x, NowUsing.y, NowUsing.width, NowUsing.height,
+                     activeFontInactive);
+  // Now Using Title
+  x = NowUsing.x + Spacing;
+  y = NowUsing.y + Spacing;
+  DrawText("Now Using:", x, y, FontSizeText, activeFontInactive);
+  DrawLine(x, y + FontSizeText,
+           x + (float)MeasureText("Now Using:", FontSizeText), y + FontSizeText,
+           activeFontInactive);
+
+  // Now Using Information
+  snprintf(buffer, sizeof(buffer), "%s", mac.name);
+  y += FontSizeText;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  // Drains
+  snprintf(buffer, sizeof(buffer), "Drains: %0.2f W/s", mac.drain);
+  y += FontSizeText;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  // Revenue
+  snprintf(buffer, sizeof(buffer), "Revenue: %0.2f$", mac.output);
+  y += FontSizeText;
+  DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+
+  // Information
+  Rectangle TextRec = {ScreenWidth - ScreenWidth / 3 + Spacing,
+                       PanelHeight * 3 + Spacing, ScreenWidth / 3 - Spacing * 2,
+                       ScreenHeight - PanelHeight * 4 - Spacing * 2};
+  SetTexts();
+  snprintf(buffer, sizeof(buffer), "Information:");
+  TextBox(TextRec, MachineInfoText, buffer, GetFontDefault(), FontSizeText,
           3.0f, activeFontInactive, activeFontActive, activeBackground);
   return;
 }
