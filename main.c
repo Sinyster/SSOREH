@@ -208,7 +208,9 @@ int main(void) {
           if (isClicked && Data.money >= bat.price) {
             Data.money -= bat.price;
             Data.ActiveBattery += 1;
-            // Function for increasing Voltage Level
+            if (Data.ActiveBattery > 5) {
+              Data.voltageBat += 1;
+            }
           }
         }
 
@@ -823,15 +825,15 @@ void DefineBatteries(Battery *bat) {
     double Prices[] = {// Lithium-Ion
                        0.0,
                        // Alkaline
-                       1000.0,
+                       1.0,
                        // Nickel-Metal Hydride
-                       1250.0,
+                       1.0,
                        // Lithium-Polymer
-                       2000.0,
+                       1.0,
                        // Solid-State
-                       3000.0,
+                       1.0,
                        // Medium Voltage
-                       5000.0};
+                       1.0};
 
     // Formatting and Defining as itself
     strcpy(bat->name, Names[Data.ActiveBattery]);
@@ -940,15 +942,19 @@ void RenderBatteryUpgradeScreen(Rectangle rec1, Rectangle rec2,
     snprintf(buffer, sizeof(buffer), "Battery: %s", bat.NextName);
     DrawText(buffer, x, y, FontSizeText, activeFontInactive);
 
-    // Next: Battery Max Capacity
-    y += FontSizeText;
-    snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh", bat.NextMaxCap);
-    DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+    if (Data.ActiveBattery < 5) {
+      // Next: Battery Max Capacity
+      y += FontSizeText;
+      snprintf(buffer, sizeof(buffer), "Max Capacity: %0.2f Wh",
+               bat.NextMaxCap);
+      DrawText(buffer, x, y, FontSizeText, activeFontInactive);
 
-    // Next: Max Input
-    y += FontSizeText;
-    snprintf(buffer, sizeof(buffer), "Max Input: %0.2f W/s", bat.NextMaxInput);
-    DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+      // Next: Max Input
+      y += FontSizeText;
+      snprintf(buffer, sizeof(buffer), "Max Input: %0.2f W/s",
+               bat.NextMaxInput);
+      DrawText(buffer, x, y, FontSizeText, activeFontInactive);
+    }
 
     // Now Using
     y = rec1.y + rec1.height / 2;
